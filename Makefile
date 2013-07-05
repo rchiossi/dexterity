@@ -3,7 +3,9 @@ CFLAGS = -fPIC
 
 LIB = dexterity.so
 
-MODULES = bytestream dex dxprinter
+CORE = bytestream dex dex_builder dex_parser
+
+MODULES = dxprinter
 
 APPS = dxread bs_test
 
@@ -11,14 +13,17 @@ APPS = dxread bs_test
 
 all: $(LIB) $(APPS)
 
-$(LIB): $(MODULES)
+$(LIB): $(CORE) $(MODULES)
 	$(CC) $(CFLAGS) -shared $(foreach mod,$(MODULES),$(mod).o) -o $@
+
+$(CORE): %: %.c dex.h
+	$(CC) $(CFLAGS) -c $@.c
 
 $(MODULES): %: %.c %.h
 	$(CC) $(CFLAGS) -c $@.c
 
-$(APPS): %: %.c $(foreach mod,$(MODULES),$(mod).o)
-	$(CC) $(CFLAGS) -o $@ $(foreach mod,$(MODULES),$(mod).o) $@.c
+$(APPS): %: %.c $(foreach core,$(CORE),$(core).o) $(foreach mod,$(MODULES),$(mod).o)
+	$(CC) $(CFLAGS) -o $@ $(foreach core,$(CORE),$(core).o) $(foreach mod,$(MODULES),$(mod).o) $@.c
 #	$(CC) $(CFLAGS) -o $@ $@.c $(LIB)
 
 clean:

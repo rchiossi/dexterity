@@ -23,11 +23,15 @@ ByteStream* bsalloc(unsigned int size);
 ByteStream* bsmap(char* filename);
 int bsfree(ByteStream* bstream);
 
+void bsseek(ByteStream* bs, uint32_t offset);
+void bsreset(ByteStream* bs);
+
 unsigned int bsread(ByteStream* bs, uint8_t* buf, size_t size);
 unsigned int bsread_offset(ByteStream* bs, uint8_t* buf, size_t size,
 			   uint32_t offset);
 
-void bsseek(ByteStream* bs, uint32_t offset);
-void bsreset(ByteStream* bs);
+int bswrite(ByteStream* bs, uint8_t* data, unsigned int size);
+unsigned int bswrite_offset(ByteStream* bs, uint8_t* buf, size_t size, 
+			    uint32_t offset);
 
 #endif

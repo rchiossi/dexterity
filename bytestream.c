@@ -94,6 +94,16 @@ int bsfree(ByteStream* bs) {
   return ret;
 }
 
+void bsseek(ByteStream* bs, uint32_t offset) {
+  bs->offset = offset;
+  bs->exhausted = 0;
+}
+
+void bsreset(ByteStream* bs) {
+  bs->offset = 0x0;
+  bs->exhausted = 0; 
+}
+
 unsigned int bsread(ByteStream* bs, uint8_t* data, size_t size) {
   unsigned int* in;
   unsigned int* out;
@@ -160,18 +170,9 @@ unsigned int bsread_offset(ByteStream* bs, uint8_t* buf, size_t size, uint32_t o
   }
 
   bs->offset = offset;
+  bs->exhausted = 0;
 
   return bsread(bs,buf,size);
-}
-
-void bsseek(ByteStream* bs, uint32_t offset) {
-  bs->offset = offset;
-  bs->exhausted = 0;
-}
-
-void bsreset(ByteStream* bs) {
-  bs->offset = 0x0;
-  bs->exhausted = 0; 
 }
 
 int bswrite(ByteStream* bs, uint8_t* data, unsigned int size) {
@@ -230,4 +231,17 @@ int bswrite(ByteStream* bs, uint8_t* data, unsigned int size) {
   bs->offset += i;
 
   return isize * sizeof(unsigned int) + size + asize;
+}
+
+unsigned int bswrite_offset(ByteStream* bs, uint8_t* buf, size_t size, uint32_t offset) {
+
+  if (offset >= bs->size) {
+    bs->exhausted = 1;
+    return 0;
+  }
+
+  bs->offset = offset;
+  bs->exhausted = 0;
+
+  return bswrite(bs,buf,size);
 }
