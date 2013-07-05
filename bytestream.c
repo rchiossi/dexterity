@@ -9,7 +9,33 @@
 
 #include "bytestream.h"
 
-ByteStream* bsalloc(char* filename) {
+ByteStream* bsalloc(unsigned int size) {
+  ByteStream* bs = (ByteStream*) malloc(sizeof(ByteStream));
+
+  if (bs == NULL) {
+    printf("ERROR: Cannot allocate bytestream structure.\n");
+    exit(-1);
+  }
+
+  bs->filename = NULL;
+  bs->size = size;
+
+  bs->exhausted = 0;
+  bs->offset = 0;
+  
+  bs->data = (uint8_t*) mmap(NULL, size, PROT_READ | PROT_WRITE, 
+			     MAP_PRIVATE | MAP_ANONYMOUS, -1, 0x0);
+
+  if (bs->data == MAP_FAILED) {
+    free(bs);
+    printf("ERROR: Unable to map mamory.\n");
+    exit(-1);
+  }
+
+  return bs;
+}
+
+ByteStream* bsmap(char* filename) {
   int fd;
   struct stat fdstat;
   ByteStream* bs;
@@ -41,7 +67,8 @@ ByteStream* bsalloc(char* filename) {
   bs->exhausted = 0;
   bs->offset = 0;
   
-  bs->data = (uint8_t*) mmap(NULL,bs->size,PROT_READ,MAP_PRIVATE,fd,0x0);
+  bs->data = (uint8_t*) mmap(NULL, bs->size, PROT_READ | PROT_WRITE,
+			     MAP_PRIVATE,fd,0x0);
 
   if (bs->data == MAP_FAILED) {
     free(bs);
@@ -67,14 +94,16 @@ int bsfree(ByteStream* bs) {
   return ret;
 }
 
-int bsread(ByteStream* bs, uint8_t* buf, size_t size) {
-  unsigned int* in = (uint32_t*) bs->data;
-  unsigned int* out = (uint32_t*) buf;
+unsigned int bsread(ByteStream* bs, uint8_t* data, size_t size) {
+  unsigned int* in;
+  unsigned int* out;
   
+  unsigned int asize;
+
   unsigned int isize;
   unsigned int ioffset;
 
-  unsigned int i,j;
+  unsigned int i;
 
   if (bs->exhausted) return 0;
 
@@ -85,26 +114,45 @@ int bsread(ByteStream* bs, uint8_t* buf, size_t size) {
     bs->exhausted = 1;
   }
 
+  //align read
+  asize = sizeof(unsigned int) - (bs->offset % sizeof(unsigned int)); 
+
+  for (i=0; i<asize && i<size; i++) {
+    data[i] = bs->data[bs->offset+i];
+  }
+
+  bs->offset += i;
+  data += i;
+  size -= i;
+  asize = i;
+
+  //optimized read
   isize = size / sizeof(unsigned int);
   ioffset = bs->offset / sizeof(unsigned int);
+
+  in = (uint32_t*) bs->data;
+  out = (uint32_t*) data;
+
   for (i=0; i<isize; i++) {
     out[i] = in[ioffset+i];
   }
 
   bs->offset += i * sizeof(unsigned int);
+  data += i * sizeof(unsigned int);
   
-  size -= isize*sizeof(unsigned int);
+  //trailing bytes read
+  size -= isize * sizeof(unsigned int);
 
-  for (j=0; j<size; j++) {
-    buf[j] = bs->data[bs->offset+i];
+  for (i=0; i<size; i++) {
+    data[i] = bs->data[bs->offset+i];
   }
 
-  bs->offset += j;
+  bs->offset += i;
 
-  return size;
+  return isize * sizeof(unsigned int) + size + asize;
 }
 
-int bsread_offset(ByteStream* bs, uint8_t* buf, size_t size, uint32_t offset) {
+unsigned int bsread_offset(ByteStream* bs, uint8_t* buf, size_t size, uint32_t offset) {
 
   if (offset >= bs->size) {
     bs->exhausted = 1;
@@ -116,17 +164,6 @@ int bsread_offset(ByteStream* bs, uint8_t* buf, size_t size, uint32_t offset) {
   return bsread(bs,buf,size);
 }
 
-int bsread_struct(ByteStream* bs, uint8_t* buf, size_t size, uint32_t offset) {
-  unsigned int* corrupted = (unsigned int*) buf;
-  uint8_t* ptr = buf += sizeof(unsigned int);
-  size_t data_size = size - sizeof(unsigned int);
-  int ret =  bsread_offset(bs,ptr,data_size,offset);
-
-  *corrupted = (ret == data_size);
-
-  return ret;
-}
-
 void bsseek(ByteStream* bs, uint32_t offset) {
   bs->offset = offset;
   bs->exhausted = 0;
@@ -135,4 +172,62 @@ void bsseek(ByteStream* bs, uint32_t offset) {
 void bsreset(ByteStream* bs) {
   bs->offset = 0x0;
   bs->exhausted = 0; 
+}
+
+int bswrite(ByteStream* bs, uint8_t* data, unsigned int size) {
+  unsigned int* in;
+  unsigned int* out;
+  
+  unsigned int asize;
+
+  unsigned int isize;
+  unsigned int ioffset;
+
+  unsigned int i;
+
+  if (bs->exhausted) return 0;
+
+  if (bs->offset >= bs->size) return 0;
+
+  if (bs->offset+size > bs->size) {
+    size = bs->size - bs->offset;
+    bs->exhausted = 1;
+  }
+
+  //align write
+  asize = sizeof(unsigned int) - (bs->offset % sizeof(unsigned int)); 
+
+  for (i=0; i<asize && i<size; i++) {
+    bs->data[bs->offset+i] = data[i];
+  }
+
+  bs->offset += i;
+  data += i;
+  size -= i;
+  asize = i;
+
+  //optimized write
+  isize = size / sizeof(unsigned int);
+  ioffset = bs->offset / sizeof(unsigned int);
+
+  in = (uint32_t*) data;
+  out = (uint32_t*) bs->data;
+
+  for (i=0; i<isize; i++) {
+    out[ioffset+i] = in[i];
+  }
+
+  bs->offset += i * sizeof(unsigned int);
+  data += i * sizeof(unsigned int);
+
+  //write finishing bytes
+  size -= i * sizeof(unsigned int);
+
+  for (i=0; i<size; i++) {
+    bs->data[bs->offset+i] = data[i];
+  }
+
+  bs->offset += i;
+
+  return isize * sizeof(unsigned int) + size + asize;
 }

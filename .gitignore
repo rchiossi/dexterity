@@ -1,3 +1,8 @@
+bs_test
+dxread
+tests/
+void/
 *.o
+*.so
 *~
 *#*

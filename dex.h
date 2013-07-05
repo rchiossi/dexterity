@@ -3,9 +3,20 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <malloc.h>
+
+#include "bytestream.h"
+
+// Metadata
+typedef struct _Metadata {
+  unsigned int corrupted;
+  uint32_t offset;
+} Metadata;
+
+//Dex Structures
 
 typedef struct _DexHeaderItem {
-  unsigned int corrupted;
+  Metadata meta;
   uint8_t magic[8];
   uint32_t checksum;
   uint8_t signature[20];
@@ -32,43 +43,44 @@ typedef struct _DexHeaderItem {
 } DexHeaderItem;
 
 typedef struct _DexStringIdItem {
-  unsigned int corrupted;
+  Metadata meta;
   uint32_t string_data_off;
 } DexStringIdItem;
 
 typedef struct _DexStringDataItem {
-  unsigned int corrupted;
-  uint32_t length;
+  Metadata meta;
+  uint32_t size;
+  uint8_t* data;
 } DexStringDataItem;
 
 typedef struct _DexTypeIdItem {
-  unsigned int corrupted;
+  Metadata meta;
   uint32_t descriptor_idx;
 } DexTypeIdItem;
 
 typedef struct _DexProtoIdItem {
-  unsigned int corrupted;
+  Metadata meta;
   uint32_t shorty_idx;
   uint32_t return_type_idx;
   uint32_t parameters_off;
 } DexProtoIdItem;
 
 typedef struct _DexFieldIdItem {
-  unsigned int corrupted;
+  Metadata meta;
   uint16_t class_idx;
   uint16_t type_idx;
   uint32_t name_idx;
 } DexFieldIdItem;
 
 typedef struct _DexMethodIdItem {
-  unsigned int corrupted;
+  Metadata meta;
   uint16_t class_idx;
   uint16_t proto_idx;
   uint32_t name_idx;
 } DexMethodIdItem;
 
 typedef struct _DexClassDefItem {
-  unsigned int corrupted;
+  Metadata meta;
   uint32_t class_idx;
   uint32_t access_flags;
   uint32_t superclass_idx;
@@ -79,68 +91,68 @@ typedef struct _DexClassDefItem {
   uint32_t static_values_off;
 } DexClassDefItem;
 
-typedef struct _DexEncodedField {
-  unsigned int corrupted;
+typedef struct _DexEncodedFieldItem {
+  Metadata meta;
   uint32_t field_idx_diff;
   uint32_t access_flags;
-} DexEncodedField;
+} DexEncodedFieldItem;
 
-typedef struct _DexEncodedMethod {
-  unsigned int corrupted;
+typedef struct _DexEncodedMethodItem {
+  Metadata meta;
   uint32_t method_idx_diff;
   uint32_t access_flags;
   uint32_t code_off;
-} DexEncodedMethod;
+} DexEncodedMethodItem;
 
 typedef struct _DexClassDataItem {
-  unsigned int corrupted;
+  Metadata meta;
   uint32_t static_fields_size;
   uint32_t instance_fields_size;
   uint32_t direct_methods_size;
   uint32_t virtual_methods_size;
 
-  DexEncodedField* static_fields;
-  DexEncodedField* instance_fields;
-  DexEncodedMethod* direct_methods;
-  DexEncodedMethod* virtual_methods;
+  DexEncodedFieldItem* static_fields;
+  DexEncodedFieldItem* instance_fields;
+  DexEncodedMethodItem* direct_methods;
+  DexEncodedMethodItem* virtual_methods;
 
   void *_data;
 } DexClassDataItem;
 
 typedef struct _DexTypeList {
-  unsigned int corrupted;
+  Metadata meta;
   uint32_t size;
   uint16_t* list;
 } DexTypeList;
 
 typedef struct _DexTryItem {
-  unsigned int corrupted;
+  Metadata meta;
   uint32_t start_addr;
   uint16_t insns_count;
   uint16_t handler_off;
 } DexTryItem;
 
 typedef struct _DexEncodedTypeAddrPair {
-  unsigned int corrupted;
+  Metadata meta;
   uint32_t type_idx;
   uint32_t addr;
 } DexEncodedTypeAddrPair;
 
 typedef struct _DexEncodedCatchHandler {
-  unsigned int corrupted;
+  Metadata meta;
   int32_t size;
   DexEncodedTypeAddrPair *handlers;
   uint32_t catch_all_address;
 } DexEncodedCatchHandler;
 
 typedef struct _DexEncodedCatchHandlerList {
-  unsigned int corrupted;
+  Metadata meta;
   uint32_t size;
   DexEncodedCatchHandler *list;
 } DexEncodedCatchHandlerList;
 
 typedef struct _DexCodeItem {
-  unsigned int corrupted;
+  Metadata meta;
   uint16_t registers_size;
   uint16_t ins_size;
   uint16_t outs_size;
@@ -154,7 +166,7 @@ typedef struct _DexCodeItem {
 } DexCodeItem;
 
 typedef struct _DexMapItem {
-  unsigned int corrupted;
+  Metadata meta;
   uint16_t type;
   uint16_t unused;
   uint32_t size;
@@ -162,9 +174,21 @@ typedef struct _DexMapItem {
 } DexMapItem;
 
 typedef struct _DexMapList {
-  unsigned int corrupted;
+  Metadata meta;
   uint32_t size;
   DexMapItem* list;
 } DexMapList;
+
+typedef struct _Dex {
+  DexHeaderItem* header;
+} Dex;
+
+//ByteStream read
+int dexread(ByteStream* bs, uint8_t* buf, size_t size, uint32_t offset);
+
+//Parse functions
+DexHeaderItem* dx_header(ByteStream* bs, uint32_t offset);
+Dex* dxdex(ByteStream* bs, uint32_t offset);
+void dxfree(Dex* dex);
 
 #endif

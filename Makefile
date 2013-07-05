@@ -1,21 +1,25 @@
 CC = gcc
-CFLAGS =
+CFLAGS = -fPIC
 
-MODULES = bytestream dex
+LIB = dexterity.so
 
-APPS = tester
+MODULES = bytestream dex dxprinter
+
+APPS = dxread bs_test
 
 .PHONY: all clean
 
-all: $(MODULES) $(APPS)
+all: $(LIB) $(APPS)
 
-modules: $(MODULES)
+$(LIB): $(MODULES)
+	$(CC) $(CFLAGS) -shared $(foreach mod,$(MODULES),$(mod).o) -o $@
 
 $(MODULES): %: %.c %.h
 	$(CC) $(CFLAGS) -c $@.c
 
-tester: %: %.c $(foreach mod,$(MODULES),$(mod).o)
+$(APPS): %: %.c $(foreach mod,$(MODULES),$(mod).o)
 	$(CC) $(CFLAGS) -o $@ $(foreach mod,$(MODULES),$(mod).o) $@.c
+#	$(CC) $(CFLAGS) -o $@ $@.c $(LIB)
 
 clean:
-	rm -f *.o $(APPS)
+	rm -f $(foreach mod,$(MODULES),$(mod).o) $(APPS) $(LIB)

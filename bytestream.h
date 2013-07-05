@@ -4,7 +4,12 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#define BS_RO 0
+#define BS_RW 1
+
 typedef struct _ByteStream {
+  unsigned int mode;
+
   char* filename;
   uint32_t size;
 
@@ -14,12 +19,13 @@ typedef struct _ByteStream {
   int exhausted;
 } ByteStream;
 
-ByteStream* bsalloc(char* filename);
+ByteStream* bsalloc(unsigned int size);
+ByteStream* bsmap(char* filename);
 int bsfree(ByteStream* bstream);
 
-int bsread(ByteStream* bs, uint8_t* buf, size_t size);
-int bsread_offset(ByteStream* bs, uint8_t* buf, size_t size,
-		  uint32_t offset);
+unsigned int bsread(ByteStream* bs, uint8_t* buf, size_t size);
+unsigned int bsread_offset(ByteStream* bs, uint8_t* buf, size_t size,
+			   uint32_t offset);
 
 void bsseek(ByteStream* bs, uint32_t offset);
 void bsreset(ByteStream* bs);
