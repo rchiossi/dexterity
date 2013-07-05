@@ -183,11 +183,23 @@ typedef struct _Dex {
   DexHeaderItem* header;
 } Dex;
 
-//ByteStream read
+//Parse
 int dexread(ByteStream* bs, uint8_t* buf, size_t size, uint32_t offset);
 
-//Parse functions
-DexHeaderItem* dx_header(ByteStream* bs, uint32_t offset);
+#define DXPARSE(_name,_type) _type* _name (ByteStream* bs, uint32_t offset)
+
+DXPARSE(dx_header,DexHeaderItem);
+DXPARSE(dx_stringid,DexStringIdItem);
+
+//Build
+int dexwrite(ByteStream* bs, uint8_t* buf, size_t size, uint32_t offset);
+
+#define DXBUILD(_name,_type) void _name (ByteStream* bs, _type* obj)
+
+DXBUILD(dxb_header,DexHeaderItem);
+DXBUILD(dxb_stringid,DexStringIdItem);
+
+//General
 Dex* dxdex(ByteStream* bs, uint32_t offset);
 void dxfree(Dex* dex);
 

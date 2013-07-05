@@ -1,5 +1,6 @@
 bs_test
 dxread
+builder
 tests/
 void/
 *.o

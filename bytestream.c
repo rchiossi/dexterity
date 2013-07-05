@@ -245,3 +245,15 @@ unsigned int bswrite_offset(ByteStream* bs, uint8_t* buf, size_t size, uint32_t 
 
   return bswrite(bs,buf,size);
 }
+
+int bssave(ByteStream* bs, char* filename) {
+  FILE* f = fopen(filename,"w");
+
+  if (bs == NULL || f == NULL) return -1;
+
+  fwrite(bs->data, 1, bs->size, f);
+
+  fflush(f);
+  fclose(f);    
+}
+

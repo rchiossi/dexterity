@@ -7,7 +7,7 @@ CORE = bytestream dex dex_builder dex_parser
 
 MODULES = dxprinter
 
-APPS = dxread bs_test
+APPS = dxread bs_test builder
 
 .PHONY: all clean
 
@@ -27,4 +27,4 @@ $(APPS): %: %.c $(foreach core,$(CORE),$(core).o) $(foreach mod,$(MODULES),$(mod
 #	$(CC) $(CFLAGS) -o $@ $@.c $(LIB)
 
 clean:
-	rm -f $(foreach mod,$(MODULES),$(mod).o) $(APPS) $(LIB)
+	rm -f $(LIB) $(foreach core,$(CORE),$(core).o) $(foreach mod,$(MODULES),$(mod).o) $(APPS)

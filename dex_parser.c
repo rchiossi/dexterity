@@ -4,8 +4,6 @@
 #include "bytestream.h"
 #include "dex.h"
 
-#define DXPARSE(_name,_type) _type* _name (ByteStream* bs, uint32_t offset)
-
 #define DXP_FIXED(_name,_type)		      \
 DXPARSE(_name,_type) {			      \
   _type* res;					      \

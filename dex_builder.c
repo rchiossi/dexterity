@@ -1,8 +1,5 @@
-
 #include "bytestream.h"
 #include "dex.h"
-
-#define DXBUILD(_name,_type) void _name (ByteStream* bs, _type* obj)
 
 #define DXB_FIXED(_name,_type)			\
 DXBUILD(_name,_type) {				\
