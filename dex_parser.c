@@ -2,6 +2,7 @@
 #include <malloc.h>
 
 #include "bytestream.h"
+#include "leb128.h"
 #include "dex.h"
 
 #define DXP_FIXED(_name,_type)		      \
@@ -36,9 +37,29 @@ int dxread(ByteStream* bs, uint8_t* buf, size_t size, uint32_t offset) {
 DXP_FIXED(dx_header,DexHeaderItem)
 DXP_FIXED(dx_stringid,DexStringIdItem)
 
-DXPARSE(dx_stringdata,DexStringDataItem) {
-  //TODO
-  return NULL;
+DexStringDataItem* dx_stringdata(ByteStream* bs, uint32_t offset) {
+  DexStringDataItem* res;
+  int check;
+
+  if (bs == NULL) return NULL;
+
+  res = (DexStringDataItem*) malloc(sizeof(DexStringDataItem));
+
+  if (res == NULL) return NULL;
+
+  check = l128read(bs,offset,&(res->size));
+
+  if (check || bs->exhausted) {
+    res->meta.corrupted = 1;
+    return res;
+  }
+
+  check = bsread(bs,res->data,ul128toui(res->size));
+
+  res->meta.corrupted = check != ul128toui(res->size);
+  res->meta.offset = offset;
+
+  return res;
 }
 
 DXP_FIXED(dx_typeid,DexTypeIdItem)
@@ -47,9 +68,8 @@ DXP_FIXED(dx_fieldid,DexFieldIdItem)
 DXP_FIXED(dx_methodid,DexMethodIdItem)
 DXP_FIXED(dx_classdef,DexClassDefItem)
 
-
-DXPARSE(dx_encodedfield,DexEncodedFieldItem) {
-  //TODO
+DexEncodedFieldItem* dx_encodedfield(ByteStream* bs, uint32_t offset) {
+   //TODO
   return NULL;
 }
 
@@ -68,7 +88,7 @@ DXPARSE(dx_typelist,DexTypeList) {
   uint8_t* ptr;
   int ret;
 
-  if (tl == NULL) return NULL;
+  if (tl == NULL || bs == NULL) return NULL;
 
   tl->meta.offset = offset;
 
@@ -77,12 +97,17 @@ DXPARSE(dx_typelist,DexTypeList) {
 
   tl->meta.corrupted = (ret == sizeof(uint32_t));
 
+  if (tl->meta.corrupted) return tl;
+
   tl->list = (uint16_t*) malloc(sizeof(uint16_t)*tl->size);
 
-  if (tl->list != NULL) {
-    ptr = (uint8_t*) tl->list;
-    ret = bsread_offset(bs,ptr,sizeof(uint16_t)*tl->size,offset);
+  if (tl->list == NULL) {
+    free(tl);
+    return NULL;
   }
+
+  ptr = (uint8_t*) tl->list;
+  ret = bsread_offset(bs,ptr,sizeof(uint16_t)*tl->size,offset);
 
   tl->meta.corrupted = ((ret != sizeof(uint32_t)) || tl->meta.corrupted);
 
@@ -90,6 +115,3 @@ DXPARSE(dx_typelist,DexTypeList) {
 }
 
 DXP_FIXED(dx_tryitem,DexTryItem)
-
-
-//DXP_FIXED(dx_,)

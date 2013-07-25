@@ -3,7 +3,7 @@ CFLAGS = -fPIC
 
 LIB = dexterity.so
 
-CORE = bytestream dex dex_builder dex_parser
+CORE = bytestream dex dex_builder dex_parser leb128
 
 MODULES = dxprinter
 

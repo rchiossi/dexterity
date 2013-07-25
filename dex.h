@@ -6,6 +6,7 @@
 #include <malloc.h>
 
 #include "bytestream.h"
+#include "leb128.h"
 
 // Metadata
 typedef struct _Metadata {
@@ -49,7 +50,7 @@ typedef struct _DexStringIdItem {
 
 typedef struct _DexStringDataItem {
   Metadata meta;
-  uint32_t size;
+  leb128_t size;
   uint8_t* data;
 } DexStringDataItem;
 

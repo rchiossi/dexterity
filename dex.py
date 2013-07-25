@@ -45,6 +45,13 @@ class ByteStream(object):
     def exhausted(self):
         return (self._bs.contents.exhausted != 0)
 
+#LEB128
+class _Leb128(Structure):
+    _fields_ = [
+        ('data',c_uint8 * 5),
+        ('size',c_uint),
+        ]
+
 #Dex
 class _Metadata(Structure):
     _fields_ = [
