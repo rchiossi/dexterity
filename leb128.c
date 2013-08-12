@@ -14,7 +14,7 @@ unsigned int l128size(ByteStream* bs) {
   if (cbyte != 0x0 && !bs->exhausted) {
     len = 1;
 
-    while (!bs->exhausted && len < 5 && cbyte & 0x80 != 0x0) {
+    while (!bs->exhausted && len < 5 && (cbyte & 0x80) != 0x0) {
       len++;
       bsread(bs,&cbyte,1);
     }      

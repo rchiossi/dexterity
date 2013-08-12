@@ -5,7 +5,7 @@
 int main(void) {
   ByteStream* in = bsmap("./tests/classes.dex");
   ByteStream* out = bsalloc(in->size);
-  Dex* dex = dxdex(in,0);
+  Dex* dex = dxdex(in);
 
   dxb_header(out,dex->header);
 

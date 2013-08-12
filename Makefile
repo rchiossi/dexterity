@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -fPIC
+CFLAGS = -fPIC -g
 
 LIB = dexterity.so
 

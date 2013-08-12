@@ -7,7 +7,7 @@
 #include "dxprinter.h"
 
 int run_option(char option, char* filter, ByteStream* bs) {
-  Dex* dex = dxdex(bs,0);
+  Dex* dex = dxdex(bs);
 
   if (dex == NULL) {
     printf("Error: Unable to allocate Dex structure.\n");

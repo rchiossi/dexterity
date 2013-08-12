@@ -8,8 +8,6 @@
 #define BS_RW 1
 
 typedef struct _ByteStream {
-  unsigned int mode;
-
   char* filename;
   size_t size;
 

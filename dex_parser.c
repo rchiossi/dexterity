@@ -54,6 +54,13 @@ DexStringDataItem* dx_stringdata(ByteStream* bs, uint32_t offset) {
     return res;
   }
 
+  res->data = (uint8_t*) malloc(sizeof(uint8_t)*ul128toui(res->size));
+
+  if (res->data == NULL) {
+    free(res);
+    return NULL;
+  }
+
   check = bsread(bs,res->data,ul128toui(res->size));
 
   res->meta.corrupted = check != ul128toui(res->size);

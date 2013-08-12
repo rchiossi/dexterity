@@ -182,6 +182,8 @@ typedef struct _DexMapList {
 
 typedef struct _Dex {
   DexHeaderItem* header;
+  DexStringIdItem** string_ids;
+  DexTypeIdItem** type_ids;
 } Dex;
 
 //Parse
@@ -190,7 +192,15 @@ int dexread(ByteStream* bs, uint8_t* buf, size_t size, uint32_t offset);
 #define DXPARSE(_name,_type) _type* _name (ByteStream* bs, uint32_t offset)
 
 DXPARSE(dx_header,DexHeaderItem);
+
 DXPARSE(dx_stringid,DexStringIdItem);
+DXPARSE(dx_typeid,DexTypeIdItem);
+DXPARSE(dx_protoid,DexProtoIdItem);
+DXPARSE(dx_fieldid,DexFieldIdItem);
+DXPARSE(dx_methodid,DexMethodIdItem);
+DXPARSE(dx_classdef,DexClassDefItem);
+
+DXPARSE(dx_stringdata,DexStringDataItem);
 
 //Build
 int dexwrite(ByteStream* bs, uint8_t* buf, size_t size, uint32_t offset);
@@ -201,7 +211,8 @@ DXBUILD(dxb_header,DexHeaderItem);
 DXBUILD(dxb_stringid,DexStringIdItem);
 
 //General
-Dex* dxdex(ByteStream* bs, uint32_t offset);
+#define dxdex(_bs) dxdex_off(_bs,(uint32_t) 0x0)
+Dex* dxdex_off(ByteStream* bs, uint32_t offset);
 void dxfree(Dex* dex);
 
 #endif
