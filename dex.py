@@ -21,7 +21,7 @@ class _ByteStream(Structure):
 
 class ByteStream(object):
     def __init__(self,fname):
-        self._bs = dxlib.bsalloc(fname)
+        self._bs = dxlib.bsmap(fname)
 
     def __del__(self):
         dxlib.bsfree(self._bs)
@@ -87,26 +87,15 @@ class _DexHeaderItem(Structure):
         ('data_off',c_uint32),
         ]
     
-class _Dex(Structure):
-    _fields_ = [
-        ('header',POINTER(_DexHeaderItem)),
-        ]
-
-class Dex(object):
-    def __init__(self,bs,offset=0):
-        self._dex = dxlib.dxdex(bs._bs,offset)
-
-        self.header = self._dex.contents.header.contents
-
-    def __del__(self):
-        dxlib.dxfree(self._dex)
-
 #Load Library
 dxlib = cdll.LoadLibrary("./dexterity.so")
 
 # ByteStream prototypes
-dxlib.bsalloc.argtypes = (c_char_p,)
+dxlib.bsalloc.argtypes = (c_uint,)
 dxlib.bsalloc.restype = POINTER(_ByteStream)
+
+dxlib.bsmap.argtypes = (c_char_p,)
+dxlib.bsmap.restype = POINTER(_ByteStream)
 
 dxlib.bsfree.argtypes = (POINTER(_ByteStream),)
 dxlib.bsfree.restype = c_int
@@ -124,8 +113,33 @@ dxlib.bsreset.argtypes = (POINTER(_ByteStream),)
 dxlib.bsreset.restype = None
 
 #Dex prototypes
-dxlib.dxdex.argtypes = (POINTER(_ByteStream),c_uint)
-dxlib.dxdex.restype = POINTER(_Dex)
+def DXPARSE(name,res):
+    global dxlib
+    getattr(dxlib,name).argtypes = (POINTER(_ByteStream),c_uint32)
+    getattr(dxlib,name).restype  = POINTER(res) 
+
+DXPARSE('dx_header',_DexHeaderItem)
+
+
+
+
+# Legacy code
+class _Dex(Structure):
+    _fields_ = [
+        ('header',POINTER(_DexHeaderItem)),
+        ]
+
+class Dex(object):
+    def __init__(self,bs,offset=0):
+        self._dex = dxlib.dxdex(bs._bs,offset)
+
+        self.header = self._dex.contents.header.contents
+
+    def __del__(self):
+        dxlib.dxfree(self._dex)
+
+#dxlib.dxdex.argtypes = (POINTER(_ByteStream),c_uint)
+#dxlib.dxdex.restype = POINTER(_Dex)
 
 dxlib.dxfree.argtypes = (POINTER(_Dex),)
 dxlib.dxfree.restype = None

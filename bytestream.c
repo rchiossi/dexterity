@@ -28,7 +28,7 @@ ByteStream* bsalloc(unsigned int size) {
 
   if (bs->data == MAP_FAILED) {
     free(bs);
-    printf("ERROR: Unable to map mamory.\n");
+    printf("ERROR: Unable to map memory.\n");
     exit(-1);
   }
 

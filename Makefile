@@ -14,7 +14,7 @@ APPS = dxread bs_test builder
 all: $(LIB) $(APPS)
 
 $(LIB): $(CORE) $(MODULES)
-	$(CC) $(CFLAGS) -shared $(foreach mod,$(MODULES),$(mod).o) -o $@
+	$(CC) $(CFLAGS) -shared $(foreach mod,$(CORE),$(mod).o) -o $@
 
 $(CORE): %: %.c dex.h
 	$(CC) $(CFLAGS) -c $@.c
