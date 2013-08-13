@@ -15,7 +15,6 @@ typedef struct _Metadata {
 } Metadata;
 
 //Dex Structures
-
 typedef struct _DexHeaderItem {
   Metadata meta;
   uint8_t magic[8];
@@ -94,23 +93,23 @@ typedef struct _DexClassDefItem {
 
 typedef struct _DexEncodedFieldItem {
   Metadata meta;
-  uint32_t field_idx_diff;
-  uint32_t access_flags;
+  leb128_t field_idx_diff;
+  leb128_t access_flags;
 } DexEncodedFieldItem;
 
 typedef struct _DexEncodedMethodItem {
   Metadata meta;
-  uint32_t method_idx_diff;
-  uint32_t access_flags;
-  uint32_t code_off;
+  leb128_t method_idx_diff;
+  leb128_t access_flags;
+  leb128_t code_off;
 } DexEncodedMethodItem;
 
 typedef struct _DexClassDataItem {
   Metadata meta;
-  uint32_t static_fields_size;
-  uint32_t instance_fields_size;
-  uint32_t direct_methods_size;
-  uint32_t virtual_methods_size;
+  leb128_t static_fields_size;
+  leb128_t instance_fields_size;
+  leb128_t direct_methods_size;
+  leb128_t virtual_methods_size;
 
   DexEncodedFieldItem* static_fields;
   DexEncodedFieldItem* instance_fields;
@@ -135,20 +134,20 @@ typedef struct _DexTryItem {
 
 typedef struct _DexEncodedTypeAddrPair {
   Metadata meta;
-  uint32_t type_idx;
-  uint32_t addr;
+  leb128_t type_idx;
+  leb128_t addr;
 } DexEncodedTypeAddrPair;
 
 typedef struct _DexEncodedCatchHandler {
   Metadata meta;
-  int32_t size;
+  leb128_t size;
   DexEncodedTypeAddrPair *handlers;
-  uint32_t catch_all_address;
+  leb128_t catch_all_addr;
 } DexEncodedCatchHandler;
 
 typedef struct _DexEncodedCatchHandlerList {
   Metadata meta;
-  uint32_t size;
+  leb128_t size;
   DexEncodedCatchHandler *list;
 } DexEncodedCatchHandlerList;
 
@@ -163,7 +162,6 @@ typedef struct _DexCodeItem {
   uint16_t* insns;
   DexTryItem *tries;
   DexEncodedCatchHandlerList handlers;
-  uint32_t raw_code_offset;
 } DexCodeItem;
 
 typedef struct _DexMapItem {
@@ -187,24 +185,29 @@ typedef struct _Dex {
 } Dex;
 
 //Parse
-int dexread(ByteStream* bs, uint8_t* buf, size_t size, uint32_t offset);
-
 #define DXPARSE(_name,_type) _type* _name (ByteStream* bs, uint32_t offset)
 
 DXPARSE(dx_header,DexHeaderItem);
-
 DXPARSE(dx_stringid,DexStringIdItem);
 DXPARSE(dx_typeid,DexTypeIdItem);
 DXPARSE(dx_protoid,DexProtoIdItem);
 DXPARSE(dx_fieldid,DexFieldIdItem);
 DXPARSE(dx_methodid,DexMethodIdItem);
 DXPARSE(dx_classdef,DexClassDefItem);
-
 DXPARSE(dx_stringdata,DexStringDataItem);
+DXPARSE(dx_encodedfield,DexEncodedFieldItem);
+DXPARSE(dx_encodedmethod,DexEncodedMethodItem);
+DXPARSE(dx_classdata,DexClassDataItem);
+DXPARSE(dx_typelist,DexTypeList);
+DXPARSE(dx_tryitem,DexTryItem);
+DXPARSE(dx_encodedtypeaddrpair,DexEncodedTypeAddrPair);
+DXPARSE(dx_encodedcatchhandler,DexEncodedCatchHandler);
+DXPARSE(dx_encodedcatchhandlerlist,DexEncodedCatchHandlerList);
+DXPARSE(dx_codeitem,DexCodeItem);
+DXPARSE(dx_mapitem,DexMapItem);
+DXPARSE(dx_maplist,DexMapList);
 
 //Build
-int dexwrite(ByteStream* bs, uint8_t* buf, size_t size, uint32_t offset);
-
 #define DXBUILD(_name,_type) void _name (ByteStream* bs, _type* obj)
 
 DXBUILD(dxb_header,DexHeaderItem);

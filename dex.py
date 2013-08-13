@@ -3,12 +3,14 @@
 from ctypes import cdll
 from ctypes import Structure
 from ctypes import POINTER, pointer
-from ctypes import Array
 
 from ctypes import c_int, c_uint, c_uint8, c_uint16, c_uint32
 from ctypes import c_char_p
 
 from ctypes import create_string_buffer
+
+from ctypes import Array
+from _ctypes import _Pointer
 
 #Bytestream
 class _ByteStream(Structure):
@@ -71,7 +73,7 @@ class Leb128(Structure):
 class Metadata(Structure):
     _fields_ = [
         ('corrupted',c_uint),
-        ('offset', c_uint),
+        ('offset', c_uint32),
         ]
 
 class DexHeaderItem(Structure):
@@ -119,7 +121,7 @@ class DexTypeIdItem(Structure):
     _fields_ = [
         ('meta', Metadata),
         ('descriptor_idx', c_uint32),
-    ]
+        ]
 
 class DexProtoIdItem(Structure):
     _fields_ = [
@@ -127,8 +129,7 @@ class DexProtoIdItem(Structure):
         ('shorty_idx', c_uint32),
         ('return_type_idx', c_uint32),
         ('parameters_off', c_uint32),
-    ]
-
+        ]
 
 class DexFieldIdItem(Structure):
     _fields_ = [
@@ -136,16 +137,16 @@ class DexFieldIdItem(Structure):
         ('class_idx', c_uint16),
         ('type_idx', c_uint16),
         ('name_idx', c_uint32),
-    ]
-
+        ]
+    
 class DexMethodIdItem(Structure):
     _fields_ = [
         ('meta', Metadata),
         ('class_idx', c_uint16),
         ('proto_idx', c_uint16),
         ('name_idx', c_uint32),
-    ]
-
+        ]
+    
 class DexClassDefItem(Structure):
     _fields_ = [
         ('meta', Metadata),
@@ -157,7 +158,102 @@ class DexClassDefItem(Structure):
         ('annotations_off', c_uint32),
         ('class_data_off', c_uint32),
         ('static_values_off', c_uint32),
-    ]
+        ]
+
+class DexEncodedFieldItem(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('field_idx_diff',Leb128),
+        ('access_flags',Leb128),
+        ]
+
+class DexEncodedMethodItem(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('method_idx_diff',Leb128),
+        ('access_flags',Leb128),
+        ('code_off',Leb128),
+        ]
+
+class DexClassDataItem(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('static_fields_size',Leb128),
+        ('instance_fields_size',Leb128),
+        ('direct_methods_size',Leb128),
+        ('virtual_methods_size',Leb128),
+        ('static_fields',POINTER(DexEncodedFieldItem)),
+        ('instance_fields',POINTER(DexEncodedFieldItem)),
+        ('direct_methods',POINTER(DexEncodedMethodItem)),
+        ('virtual_methods',POINTER(DexEncodedMethodItem)),
+        ]
+
+class DexTypeList(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('size', c_uint32),
+        ('list', c_uint16),
+        ]
+
+class DexTryItem(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('start_addr', c_uint32),
+        ('insns_count', c_uint16),
+        ('handler_off', c_uint16),
+        ]
+
+class DexEncodedTypeAddrPair(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('type_idx', Leb128),
+        ('addr', Leb128),
+        ]
+
+class DexEncodedCatchHandler(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('size', Leb128),
+        ('handlers', POINTER(DexEncodedTypeAddrPair)),
+        ('catch_all_addr', Leb128)
+        ]
+
+class DexEncodedCatchHandlerList(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('size',Leb128),
+        ('list',POINTER(DexEncodedCatchHandler)),
+        ]
+
+class DexCodeItem(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('registers_size',c_uint16),
+        ('ins_size',c_uint16),
+        ('outs_size',c_uint16),
+        ('tries_size',c_uint16),
+        ('debug_info_off',c_uint32),
+        ('insns_size',c_uint32),
+        ('insns',POINTER(c_uint16)),
+        ('tries',POINTER(DexTryItem)),
+        ('handlers',DexEncodedCatchHandlerList),
+        ]
+
+class DexMapItem(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('type',c_uint16),
+        ('unused',c_uint16),
+        ('size',c_uint32),
+        ('offset',c_uint32),
+        ]
+
+class DexMapList(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('size', c_uint32),
+        ('list', POINTER(DexMapItem)),
+        ]
 
 #Load Library
 dxlib = cdll.LoadLibrary("./dexterity.so")
@@ -201,15 +297,24 @@ def DXPARSE(name,res):
     getattr(dxlib,name).restype  = POINTER(res) 
 
 DXPARSE('dx_header',DexHeaderItem)
-
 DXPARSE('dx_stringid',DexStringIdItem)
 DXPARSE('dx_typeid',DexTypeIdItem)
 DXPARSE('dx_protoid',DexProtoIdItem)
 DXPARSE('dx_fieldid',DexFieldIdItem)
 DXPARSE('dx_methodid',DexMethodIdItem)
 DXPARSE('dx_classdef',DexClassDefItem)
-
 DXPARSE('dx_stringdata',DexStringDataItem)
+DXPARSE('dx_encodedfield',DexEncodedFieldItem)
+DXPARSE('dx_encodedmethod',DexEncodedMethodItem)
+DXPARSE('dx_classdata',DexClassDataItem)
+DXPARSE('dx_typelist',DexTypeList)
+DXPARSE('dx_tryitem',DexTryItem)
+DXPARSE('dx_encodedtypeaddrpair',DexEncodedTypeAddrPair)
+DXPARSE('dx_encodedcatchhandler',DexEncodedCatchHandler)
+DXPARSE('dx_encodedcatchhandlerlist',DexEncodedCatchHandlerList)
+DXPARSE('dx_codeitem',DexCodeItem)
+DXPARSE('dx_mapitem',DexMapItem)
+DXPARSE('dx_maplist',DexMapList)
 
 #DexParser
 class DexParser(object):
@@ -220,47 +325,39 @@ class DexParser(object):
     def seek(self,offset):
         self.bs.seek(offset)
 
-    def parse(self,func,offset):
+    def item(self,item,offset=None):
         if offset != None: self.seek(offset)
-        obj = func(self.bs._bs,self.bs._bs.contents.offset)
+
+        f_parse = getattr(dxlib,'dx_' + item)
+        if f_parse == None:
+            raise(Exception("Invalid parse item: %s" % item))
+
+        obj = f_parse(self.bs._bs,self.bs._bs.contents.offset)
+
         return obj.contents
 
-    #Main Structures
-    def header(self,offset=None):
-        return self.parse(dxlib.dx_header,offset)
+    def list(self,item,amount,offset=None):
+        if offset != None: self.seek(offset)
 
-    def stringid(self,offset=None):
-        return self.parse(dxlib.dx_stringid,offset)
+        return [self.item(item) for i in xrange(amount)]
 
-    def typeid(self,offset=None):
-        return self.parse(dxlib.dx_typeid,offset)
-
-    def protoid(self,offset=None):
-        return self.parse(dxlib.dx_protoid,offset)
-
-    def fieldid(self,offset=None):
-        return self.parse(dxlib.dx_fieldid,offset)
-
-    def methodid(self,offset=None):
-        return self.parse(dxlib.dx_methodid,offset)
-
-    def classdef(self,offset=None):
-        return self.parse(dxlib.dx_classdef,offset)
-
-    def stringdata(self,offset=None):
-        return self.parse(dxlib.dx_stringdata,offset)
+    def table(self,item,dlist,doff):
+        return [self.item(item,getattr(ditem,doff)) for ditem in dlist]
 
 def dxprint(obj,pad=0):
     print ' '*pad + "%s:" % obj.__class__.__name__
 
     for name,a_class in obj._fields_:
         val = getattr(obj,name)
-
+        
         if issubclass(a_class,(Structure,)):
             dxprint(val,pad+2)
         elif issubclass(a_class,(Array,)):
             data = ''.join(['%02x' % x for x in val])
             print ' '* pad + "  %s: %s" % (name,data)
+        elif issubclass(a_class,(_Pointer,)):
+            print ' '*(pad+2) + '>>> List - Fist item:'
+            dxprint(val[0],pad+4)
         elif issubclass(a_class,(c_char_p,)):
             print ' '* pad + "  %s: %s" % (name,val)
         elif name.find('size') != -1:

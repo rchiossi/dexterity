@@ -36,6 +36,11 @@ int dxread(ByteStream* bs, uint8_t* buf, size_t size, uint32_t offset) {
 //Parse functions
 DXP_FIXED(dx_header,DexHeaderItem)
 DXP_FIXED(dx_stringid,DexStringIdItem)
+DXP_FIXED(dx_typeid,DexTypeIdItem)
+DXP_FIXED(dx_protoid,DexProtoIdItem)
+DXP_FIXED(dx_fieldid,DexFieldIdItem)
+DXP_FIXED(dx_methodid,DexMethodIdItem)
+DXP_FIXED(dx_classdef,DexClassDefItem)
 
 DexStringDataItem* dx_stringdata(ByteStream* bs, uint32_t offset) {
   DexStringDataItem* res;
@@ -69,28 +74,22 @@ DexStringDataItem* dx_stringdata(ByteStream* bs, uint32_t offset) {
   return res;
 }
 
-DXP_FIXED(dx_typeid,DexTypeIdItem)
-DXP_FIXED(dx_protoid,DexProtoIdItem)
-DXP_FIXED(dx_fieldid,DexFieldIdItem)
-DXP_FIXED(dx_methodid,DexMethodIdItem)
-DXP_FIXED(dx_classdef,DexClassDefItem)
-
 DexEncodedFieldItem* dx_encodedfield(ByteStream* bs, uint32_t offset) {
-   //TODO
-  return NULL;
-}
-
-DXPARSE(dx_encodedmethod,DexEncodedMethodItem) {
   //TODO
   return NULL;
 }
 
-DXPARSE(dx_classdata,DexClassDataItem) {
+DexEncodedMethodItem* dx_encodedmethod(ByteStream* bs, uint32_t offset) {
   //TODO
   return NULL;
 }
 
-DXPARSE(dx_typelist,DexTypeList) {
+DexClassDataItem* dx_classdata(ByteStream* bs, uint32_t offset) {
+  //TODO
+  return NULL;
+}
+
+DexTypeList* dx_typelist(ByteStream* bs, uint32_t offset) {
   DexTypeList* tl = (DexTypeList*) malloc(sizeof(DexTypeList));
   uint8_t* ptr;
   int ret;
@@ -102,7 +101,7 @@ DXPARSE(dx_typelist,DexTypeList) {
   ptr = (uint8_t*) &(tl->size);
   ret = bsread_offset(bs,ptr,sizeof(uint32_t),offset);
 
-  tl->meta.corrupted = (ret == sizeof(uint32_t));
+  tl->meta.corrupted = (ret != sizeof(uint32_t));
 
   if (tl->meta.corrupted) return tl;
 
@@ -114,7 +113,7 @@ DXPARSE(dx_typelist,DexTypeList) {
   }
 
   ptr = (uint8_t*) tl->list;
-  ret = bsread_offset(bs,ptr,sizeof(uint16_t)*tl->size,offset);
+  ret = bsread_offset(bs,ptr,sizeof(uint16_t)*tl->size,offset+sizeof(uint32_t));
 
   tl->meta.corrupted = ((ret != sizeof(uint32_t)) || tl->meta.corrupted);
 
@@ -122,3 +121,66 @@ DXPARSE(dx_typelist,DexTypeList) {
 }
 
 DXP_FIXED(dx_tryitem,DexTryItem)
+
+DexEncodedTypeAddrPair* dx_encodedtypeaddrpair(ByteStream* bs, uint32_t offset) {
+  //TODO
+  return NULL;
+}
+
+DexEncodedCatchHandler* dx_encodedcatchhandler(ByteStream* bs, uint32_t offset) {
+  //TODO
+  return NULL;
+}
+
+DexEncodedCatchHandlerList* dx_encodedcatchhandlerlist(ByteStream* bs, uint32_t offset) {
+  //TODO
+  return NULL;
+}
+
+DexCodeItem* dx_codeitem(ByteStream* bs, uint32_t offset) {
+  //TODO
+  return NULL;
+}
+
+DXP_FIXED(dx_mapitem,DexMapItem)
+
+DexMapList* dx_maplist(ByteStream* bs, uint32_t offset) {
+  DexMapList* ml = (DexMapList*) malloc(sizeof(DexMapList));
+  uint8_t* ptr;
+  uint32_t off;
+  int ret;
+  int i;
+
+  if (ml == NULL || bs == NULL) return NULL;
+
+  ml->meta.offset = offset;
+
+  ptr = (uint8_t*) &(ml->size);
+  ret = bsread_offset(bs,ptr,sizeof(uint32_t),offset);
+
+  ml->meta.corrupted = (ret != sizeof(uint32_t));
+
+  if (ml->meta.corrupted) return ml;
+
+  ml->list = (DexMapItem*) malloc(sizeof(DexMapItem)*ml->size);
+
+  if (ml->list == NULL) {
+    free(ml);
+    return NULL;
+  }
+
+  for (i=0; i<ml->size; i++) {
+    ptr = (uint8_t*) &(ml->list[i]);
+    
+    off = offset + sizeof(uint32_t) + (sizeof(DexMapItem)-sizeof(Metadata))*i;
+
+    dxread(bs,ptr,sizeof(DexMapItem),off);
+
+    if (ml->list[i].meta.corrupted) {
+      ml->meta.corrupted = 1;
+      break;
+    }
+  }
+
+  return ml;
+}
