@@ -188,11 +188,17 @@ class DexClassDataItem(Structure):
         ('virtual_methods',POINTER(DexEncodedMethodItem)),
         ]
 
+class DexTypeItem(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('type_idx', c_uint16),
+        ]
+
 class DexTypeList(Structure):
     _fields_ = [
         ('meta', Metadata),
         ('size', c_uint32),
-        ('list', c_uint16),
+        ('list', POINTER(DexTypeItem)),
         ]
 
 class DexTryItem(Structure):
@@ -342,7 +348,13 @@ class DexParser(object):
         return [self.item(item) for i in xrange(amount)]
 
     def table(self,item,dlist,doff):
-        return [self.item(item,getattr(ditem,doff)) for ditem in dlist]
+        res = []
+        
+        for ditem in dlist:
+            if getattr(ditem,doff) != 0:
+                res.append(self.item(item,getattr(ditem,doff)))
+
+        return res
 
 def dxprint(obj,pad=0):
     print ' '*pad + "%s:" % obj.__class__.__name__

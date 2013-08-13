@@ -119,10 +119,15 @@ typedef struct _DexClassDataItem {
   void *_data;
 } DexClassDataItem;
 
+typedef struct _DexTypeItem {
+  Metadata meta;
+  uint16_t type_idx;
+} DexTypeItem;
+
 typedef struct _DexTypeList {
   Metadata meta;
   uint32_t size;
-  uint16_t* list;
+  DexTypeItem* list;
 } DexTypeList;
 
 typedef struct _DexTryItem {
@@ -198,6 +203,7 @@ DXPARSE(dx_stringdata,DexStringDataItem);
 DXPARSE(dx_encodedfield,DexEncodedFieldItem);
 DXPARSE(dx_encodedmethod,DexEncodedMethodItem);
 DXPARSE(dx_classdata,DexClassDataItem);
+DXPARSE(dx_typeitem,DexTypeItem);
 DXPARSE(dx_typelist,DexTypeList);
 DXPARSE(dx_tryitem,DexTryItem);
 DXPARSE(dx_encodedtypeaddrpair,DexEncodedTypeAddrPair);

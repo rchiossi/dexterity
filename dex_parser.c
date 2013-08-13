@@ -89,10 +89,14 @@ DexClassDataItem* dx_classdata(ByteStream* bs, uint32_t offset) {
   return NULL;
 }
 
+DXP_FIXED(dx_typeitem,DexTypeItem);
+
 DexTypeList* dx_typelist(ByteStream* bs, uint32_t offset) {
   DexTypeList* tl = (DexTypeList*) malloc(sizeof(DexTypeList));
   uint8_t* ptr;
+  uint32_t off;
   int ret;
+  int i;
 
   if (tl == NULL || bs == NULL) return NULL;
 
@@ -105,17 +109,25 @@ DexTypeList* dx_typelist(ByteStream* bs, uint32_t offset) {
 
   if (tl->meta.corrupted) return tl;
 
-  tl->list = (uint16_t*) malloc(sizeof(uint16_t)*tl->size);
+  tl->list = (DexTypeItem*) malloc(sizeof(DexTypeItem)*tl->size);
 
   if (tl->list == NULL) {
     free(tl);
     return NULL;
   }
 
-  ptr = (uint8_t*) tl->list;
-  ret = bsread_offset(bs,ptr,sizeof(uint16_t)*tl->size,offset+sizeof(uint32_t));
+  for (i=0; i<tl->size; i++) {
+    ptr = (uint8_t*) &(tl->list[i]);
+    
+    off = offset + sizeof(uint32_t) + (sizeof(DexTypeItem)-sizeof(Metadata))*i;
+      
+    dxread(bs,ptr,sizeof(DexTypeItem),off);
 
-  tl->meta.corrupted = ((ret != sizeof(uint32_t)) || tl->meta.corrupted);
+    if (tl->list[i].meta.corrupted) {
+      tl->meta.corrupted = 1;
+      break;
+    }
+  }
 
   return tl;
 }
