@@ -30,10 +30,8 @@
     						      \
   if (bs == NULL) return NULL;			      \
 						      \
-  res = (_type*) malloc(sizeof(_type));		      \
-						      \
-  if (res == NULL) alloc_fail();		      \
-						      \
+  DX_ALLOC(_type,res);				      \
+  						      \
   bsseek(bs,offset);				      \
 						      \
   dxread(bs,(uint8_t*)res,sizeof(_type));	      \
@@ -209,27 +207,75 @@ DexTypeList* dx_typelist(ByteStream* bs, uint32_t offset) {
 DXP_FIXED(dx_tryitem,DexTryItem)
 
 DexEncodedTypeAddrPair* dx_encodedtypeaddrpair(ByteStream* bs, uint32_t offset) {
+  DexEncodedTypeAddrPair* res;
+  int check;
+
   if (bs == NULL) return NULL;
 
-  //TODO
-  return NULL;
+  DX_ALLOC(DexEncodedTypeAddrPair,res);
+
+  bsseek(bs,offset);
+
+  check  = l128read(bs,&(res->type_idx));
+  check |= l128read(bs,&(res->addr));
+
+  res->meta.corrupted = check || bs->exhausted;
+  
+  return res;
 }
 
 DexEncodedCatchHandler* dx_encodedcatchhandler(ByteStream* bs, uint32_t offset) {
+  DexEncodedCatchHandler* res;
+  int check;
+  int i;
+
   if (bs == NULL) return NULL;
-  //TODO
-  return NULL;
+
+  DX_ALLOC(DexEncodedCatchHandler,res);
+
+  bsseek(bs,offset);
+
+  check  = l128read(bs,&(res->size));
+
+  DX_ALLOC_LIST(DexEncodedTypeAddrPair*,res->handlers,ul128toui(res->size));
+
+  for (i=0; i<ul128toui(res->size); i++)
+    res->handlers[i] = dx_encodedtypeaddrpair(bs,bs->offset);
+
+  if (ul128toui(res->size) > 0) 
+    check |= l128read(bs,&(res->catch_all_addr));
+
+  res->meta.corrupted = check || bs->exhausted;
+  
+  return res;
 }
 
 DexEncodedCatchHandlerList* dx_encodedcatchhandlerlist(ByteStream* bs, uint32_t offset) {
+  DexEncodedCatchHandlerList* res;
+  int check;
+  int i;
+
   if (bs == NULL) return NULL;
-  //TODO
-  return NULL;
+
+  DX_ALLOC(DexEncodedCatchHandlerList,res);
+
+  bsseek(bs,offset);
+
+  check  = l128read(bs,&(res->size));
+
+  res->meta.corrupted = check || bs->exhausted;
+
+  DX_ALLOC_LIST(DexEncodedCatchHandler*,res->list,ul128toui(res->size));
+
+  for (i=0; i<ul128toui(res->size); i++)
+    res->list[i] = dx_encodedcatchhandler(bs,bs->offset);
+  
+  return res;
 }
 
 DexCodeItem* dx_codeitem(ByteStream* bs, uint32_t offset) {
-  if (bs == NULL) return NULL;
-  //TODO
+  
+
   return NULL;
 }
 

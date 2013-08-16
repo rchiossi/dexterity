@@ -1,4 +1,7 @@
 class DexPrinter (object):
+    def __init__(self,meta_verbose=False):
+        self.meta_verbose = meta_verbose
+
     def max_attr(self,obj):
         return max([len(i[0]) for i in obj._fields_])
             
@@ -14,6 +17,8 @@ class DexPrinter (object):
         print ' '*pad + msg + ':'
         
     def meta(self,obj,pad=0):
+        if not self.meta_verbose: return
+
         self.print_label('Metadata',pad)
         
         size = self.max_attr(obj)
@@ -179,17 +184,21 @@ class DexPrinter (object):
         self.print_attr('virtual_methods_size',obj.virtual_methods_size.uleb(),
                         pad,size)
 
+        self.print_label("static_fields",pad)
         for i in xrange(obj.static_fields_size.uleb()):
-            self.encodedfield(obj.static_fields[i].contents,pad)
+            self.encodedfield(obj.static_fields[i].contents,pad+2)
 
+        self.print_label("instance_fields",pad)
         for i in xrange(obj.instance_fields_size.uleb()):
-            self.encodedfield(obj.instance_fields[i].contents,pad)
+            self.encodedfield(obj.instance_fields[i].contents,pad+2)
 
+        self.print_label("direct_methods",pad)
         for i in xrange(obj.direct_methods_size.uleb()):
-            self.encodedmethod(obj.direct_methods[i].contents,pad)
+            self.encodedmethod(obj.direct_methods[i].contents,pad+2)
 
+        self.print_label("virtual_methods",pad)
         for i in xrange(obj.virtual_methods_size.uleb()):
-            self.encodedmethod(obj.virtual_methods[i].contents,pad)
+            self.encodedmethod(obj.virtual_methods[i].contents,pad+2)
 
     def typeitem(self,obj,pad=0):
         self.print_label("TypeItem",pad)

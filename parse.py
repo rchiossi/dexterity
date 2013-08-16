@@ -8,7 +8,7 @@ from dex import dxprint
 from dxprinter import DexPrinter
 
 def main():
-    printer = DexPrinter()
+    printer = DexPrinter(False)
 
     dxp = DexParser("./tests/classes.dex")
 
