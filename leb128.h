@@ -11,7 +11,8 @@ typedef struct _leb128 {
 
 unsigned int l128size(ByteStream* bs);
 
-int l128read(ByteStream* bs, uint32_t offset, leb128_t* leb);
+int l128read(ByteStream* bs, leb128_t* leb);
+int l128read_offset(ByteStream* bs, leb128_t* leb, uint32_t offset);
 
 unsigned int ul128toui(leb128_t uleb);
 unsigned int ul128p1toui(leb128_t ulebp1);

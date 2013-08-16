@@ -23,7 +23,12 @@ def main():
 
     type_lists = dxp.table('typelist',proto_ids,'parameters_off')
 
-    dxprint(header)
+    for class_def in class_defs:
+        dxp.class_data(class_def.class_data_off)
+
+    class_data_list = dxp.table('classdata',class_defs,'class_data_off')
+
+#    dxprint(header)
 
 #    dxprint(map_list)
 
@@ -41,6 +46,10 @@ def main():
 
 #    for item in string_data_list:
 #        print str(item.data)[:item.size.uleb()]
+
+    for item in class_data_list:
+        dxprint(item) 
+
 
 
 if __name__ == '__main__':

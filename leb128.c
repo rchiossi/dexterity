@@ -11,7 +11,7 @@ unsigned int l128size(ByteStream* bs) {
 
   bsread(bs,&cbyte,1);
 
-  if (cbyte != 0x0 && !bs->exhausted) {
+  if (!bs->exhausted) {
     len = 1;
 
     while (!bs->exhausted && len < 5 && (cbyte & 0x80) != 0x0) {
@@ -25,19 +25,26 @@ unsigned int l128size(ByteStream* bs) {
   return len;
 }
 
-int l128read(ByteStream* bs, uint32_t offset, leb128_t* leb)  {
+int l128read(ByteStream* bs, leb128_t* leb)  {
   int ret;
 
   if (bs == NULL) return -1;
-
-  bsseek(bs,offset);
 
   leb->size = l128size(bs);
 
   ret = bsread(bs,leb->data,leb->size);
 
-  return 0;
+  return ret != leb->size;
 }
+
+int l128read_offset(ByteStream* bs, leb128_t* leb, uint32_t offset) {
+  if (bs == NULL) return -1;
+
+  bsseek(bs,offset);
+
+  return l128read(bs,leb);
+}
+
 
 unsigned int ul128toui(leb128_t uleb) {
   unsigned int val = 0;

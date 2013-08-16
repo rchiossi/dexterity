@@ -356,13 +356,25 @@ class DexParser(object):
 
         return res
 
+    def class_data(self,offset=None):
+        if offset != None: self.seek(offset)
+
+        obj = dxlib.dx_classdata(self.bs._bs,self.bs._bs.contents.offset);
+
+        return obj
+
 def dxprint(obj,pad=0):
     print ' '*pad + "%s:" % obj.__class__.__name__
 
     for name,a_class in obj._fields_:
         val = getattr(obj,name)
-        
-        if issubclass(a_class,(Structure,)):
+ 
+        if bool(val) == 0:
+            print ' '*(pad+2) + "%s: None" % name
+        elif issubclass(a_class,(Leb128,)):       
+#            print ' '*(pad+2) + "%s: %d" % (name,dxlib.ul128toui(val))
+            dxprint(val,pad+2)
+        elif issubclass(a_class,(Structure,)):
             dxprint(val,pad+2)
         elif issubclass(a_class,(Array,)):
             data = ''.join(['%02x' % x for x in val])

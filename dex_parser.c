@@ -1,23 +1,64 @@
 #include <stdint.h>
 #include <malloc.h>
+#include <stdlib.h>
 
 #include "bytestream.h"
 #include "leb128.h"
 #include "dex.h"
 
-#define DXP_FIXED(_name,_type)		      \
-DXPARSE(_name,_type) {			      \
+#define DX_ALLOC(_type,_var)			\
+  do {						\
+  (_var) = (_type*) malloc(sizeof(_type));	\
+  if ((_var) == NULL) alloc_fail();		\
+  (_var)->meta.offset = offset;			\
+  (_var)->meta.corrupted = 0;			\
+  } while(0)
+
+#define DX_ALLOC_LIST(_type,_var,_size)			\
+  do {							\
+  if (_size != 0) {					\
+    (_var) = (_type*) malloc(sizeof(_type)*(_size));	\
+    if ((_var) == NULL) alloc_fail();			\
+  } else {						\
+    (_var) = NULL;					\
+  }							\
+  } while(0)
+
+#define DX_READ_LIST(_bs,_offset,_type,_var,_size)	\
+  do {							\
+							\
+  for (unsigned int _i=0; _i< (_size) ; _i++) {		\
+    uint8_t* _ptr = (uint8_t*) &((_var)[_i]);		\
+    uint32_t _off = (_offset) +  sizeof(uint32_t);	\
+    _off += (sizeof(_type)-sizeof(Metadata))*_i;	\
+							\
+    dxread((_bs),_ptr,sizeof(_type),_off);		\
+							\
+    if ((_var)[_i].meta.corrupted) break;		\
+  }  						        \
+  (_offset) = (_bs)->offset;				\
+							\
+  } while (0)
+
+#define DXP_FIXED(_name,_type)			      \
+  DXPARSE(_name,_type) {			      \
   _type* res;					      \
     						      \
   if (bs == NULL) return NULL;			      \
 						      \
   res = (_type*) malloc(sizeof(_type));		      \
 						      \
-  if (res == NULL) return NULL;			      \
+  if (res == NULL) alloc_fail();		      \
 						      \
   dxread(bs,(uint8_t*)res,sizeof(_type),offset);      \
 						      \
   return res;					      \
+}
+
+void alloc_fail() __attribute__ ((noreturn));
+void alloc_fail() {
+  fprintf(stderr,"ERROR: Unable to allocate memory.\n");
+  exit(-1);
 }
 
 //Read Aux
@@ -48,11 +89,11 @@ DexStringDataItem* dx_stringdata(ByteStream* bs, uint32_t offset) {
 
   if (bs == NULL) return NULL;
 
-  res = (DexStringDataItem*) malloc(sizeof(DexStringDataItem));
+  DX_ALLOC(DexStringDataItem,res);
 
-  if (res == NULL) return NULL;
+  bsseek(bs,offset);
 
-  check = l128read(bs,offset,&(res->size));
+  check = l128read(bs,&(res->size));
 
   if (check || bs->exhausted) {
     res->meta.corrupted = 1;
@@ -61,46 +102,111 @@ DexStringDataItem* dx_stringdata(ByteStream* bs, uint32_t offset) {
 
   res->data = (uint8_t*) malloc(sizeof(uint8_t)*ul128toui(res->size));
 
-  if (res->data == NULL) {
-    free(res);
-    return NULL;
-  }
+  if (res->data == NULL) alloc_fail();
 
   check = bsread(bs,res->data,ul128toui(res->size));
 
   res->meta.corrupted = check != ul128toui(res->size);
-  res->meta.offset = offset;
 
   return res;
 }
 
 DexEncodedFieldItem* dx_encodedfield(ByteStream* bs, uint32_t offset) {
-  //TODO
-  return NULL;
+  DexEncodedFieldItem* res;
+  int check;
+
+  if (bs == NULL) return NULL;
+
+  DX_ALLOC(DexEncodedFieldItem,res);
+
+  bsseek(bs,offset);
+
+  check  = l128read(bs,&(res->field_idx_diff));
+  check |= l128read(bs,&(res->access_flags));
+
+  res->meta.corrupted = check || bs->exhausted;
+  
+  return res;
 }
 
 DexEncodedMethodItem* dx_encodedmethod(ByteStream* bs, uint32_t offset) {
-  //TODO
-  return NULL;
+  DexEncodedMethodItem* res;
+  int check;
+
+  if (bs == NULL) return NULL;
+
+  DX_ALLOC(DexEncodedMethodItem,res);
+
+  bsseek(bs,offset);
+
+  check  = l128read(bs,&(res->method_idx_diff));
+  check |= l128read(bs,&(res->access_flags));
+  check |= l128read(bs,&(res->code_off));
+
+  res->meta.corrupted = check || bs->exhausted;
+  
+  return res;
 }
 
 DexClassDataItem* dx_classdata(ByteStream* bs, uint32_t offset) {
-  //TODO
-  return NULL;
+  DexClassDataItem* res;
+  int check;
+
+  int i;
+  uint8_t* ptr;
+  uint32_t off;
+
+  if (bs == NULL) return NULL;
+
+  DX_ALLOC(DexClassDataItem,res);
+
+  bsseek(bs,offset);
+
+  check  = l128read(bs,&(res->static_fields_size));
+  check |= l128read(bs,&(res->instance_fields_size));
+  check |= l128read(bs,&(res->direct_methods_size));
+  check |= l128read(bs,&(res->virtual_methods_size));
+
+  res->meta.corrupted = check || bs->exhausted;
+
+  if (res->meta.corrupted) return res;
+
+  /*
+  offset = bs->offset;
+
+  DX_ALLOC_LIST(DexEncodedFieldItem,res->static_fields,
+		ul128toui(res->static_fields_size));
+  DX_ALLOC_LIST(DexEncodedFieldItem,res->instance_fields,
+		ul128toui(res->instance_fields_size));
+  DX_ALLOC_LIST(DexEncodedMethodItem,res->direct_methods,
+		ul128toui(res->direct_methods_size));
+  DX_ALLOC_LIST(DexEncodedMethodItem,res->virtual_methods,
+		ul128toui(res->virtual_methods_size));
+  
+  DX_READ_LIST(bs,offset,DexEncodedFieldItem,res->static_fields,
+	       ul128toui(res->static_fields_size));
+  DX_READ_LIST(bs,offset,DexEncodedFieldItem,res->instance_fields,
+	       ul128toui(res->instance_fields_size)); 
+  DX_READ_LIST(bs,offset,DexEncodedMethodItem,res->direct_methods,
+	       ul128toui(res->direct_methods_size));
+  DX_READ_LIST(bs,offset,DexEncodedMethodItem,res->virtual_methods,
+	       ul128toui(res->virtual_methods_size));
+  */
+  return res;
 }
 
 DXP_FIXED(dx_typeitem,DexTypeItem);
 
 DexTypeList* dx_typelist(ByteStream* bs, uint32_t offset) {
-  DexTypeList* tl = (DexTypeList*) malloc(sizeof(DexTypeList));
+  DexTypeList* tl;
   uint8_t* ptr;
   uint32_t off;
   int ret;
   int i;
 
-  if (tl == NULL || bs == NULL) return NULL;
+  if (bs == NULL) return NULL;
 
-  tl->meta.offset = offset;
+  DX_ALLOC(DexTypeList,tl);
 
   ptr = (uint8_t*) &(tl->size);
   ret = bsread_offset(bs,ptr,sizeof(uint32_t),offset);
@@ -109,12 +215,9 @@ DexTypeList* dx_typelist(ByteStream* bs, uint32_t offset) {
 
   if (tl->meta.corrupted) return tl;
 
-  tl->list = (DexTypeItem*) malloc(sizeof(DexTypeItem)*tl->size);
+  offset += sizeof(uint32_t);
 
-  if (tl->list == NULL) {
-    free(tl);
-    return NULL;
-  }
+  DX_ALLOC_LIST(DexTypeItem,tl->list,tl->size);
 
   for (i=0; i<tl->size; i++) {
     ptr = (uint8_t*) &(tl->list[i]);
@@ -135,21 +238,26 @@ DexTypeList* dx_typelist(ByteStream* bs, uint32_t offset) {
 DXP_FIXED(dx_tryitem,DexTryItem)
 
 DexEncodedTypeAddrPair* dx_encodedtypeaddrpair(ByteStream* bs, uint32_t offset) {
+  if (bs == NULL) return NULL;
+
   //TODO
   return NULL;
 }
 
 DexEncodedCatchHandler* dx_encodedcatchhandler(ByteStream* bs, uint32_t offset) {
+  if (bs == NULL) return NULL;
   //TODO
   return NULL;
 }
 
 DexEncodedCatchHandlerList* dx_encodedcatchhandlerlist(ByteStream* bs, uint32_t offset) {
+  if (bs == NULL) return NULL;
   //TODO
   return NULL;
 }
 
 DexCodeItem* dx_codeitem(ByteStream* bs, uint32_t offset) {
+  if (bs == NULL) return NULL;
   //TODO
   return NULL;
 }
@@ -157,15 +265,15 @@ DexCodeItem* dx_codeitem(ByteStream* bs, uint32_t offset) {
 DXP_FIXED(dx_mapitem,DexMapItem)
 
 DexMapList* dx_maplist(ByteStream* bs, uint32_t offset) {
-  DexMapList* ml = (DexMapList*) malloc(sizeof(DexMapList));
+  DexMapList* ml;
   uint8_t* ptr;
   uint32_t off;
   int ret;
   int i;
 
-  if (ml == NULL || bs == NULL) return NULL;
+  if (bs == NULL) return NULL;
 
-  ml->meta.offset = offset;
+  DX_ALLOC(DexMapList,ml);
 
   ptr = (uint8_t*) &(ml->size);
   ret = bsread_offset(bs,ptr,sizeof(uint32_t),offset);
@@ -174,12 +282,9 @@ DexMapList* dx_maplist(ByteStream* bs, uint32_t offset) {
 
   if (ml->meta.corrupted) return ml;
 
-  ml->list = (DexMapItem*) malloc(sizeof(DexMapItem)*ml->size);
+  offset += sizeof(uint32_t);
 
-  if (ml->list == NULL) {
-    free(ml);
-    return NULL;
-  }
+  DX_ALLOC_LIST(DexMapItem,ml->list,ml->size);
 
   for (i=0; i<ml->size; i++) {
     ptr = (uint8_t*) &(ml->list[i]);
