@@ -20,7 +20,7 @@ class DexPrinter (object):
         pad += 2
 
         self.print_attr('corrupted',obj.corrupted,pad,size)
-        self.print_attr('offset',obj.offset,pad,size)
+        self.print_attr('offset',hex(obj.offset),pad,size)
 
     def header(self,obj,pad=0):
         self.print_label("Header",pad)
@@ -223,7 +223,7 @@ class DexPrinter (object):
         
         size = self.max_attr(obj)
 
-        self.print_attr('type',obj.type,pad,size)
+        self.print_attr('type',hex(obj.type),pad,size)
         self.print_attr('unused',obj.unused,pad,size)
         self.print_attr('size',obj.size,pad,size)
         self.print_attr('offset',obj.offset,pad,size)

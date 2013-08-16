@@ -24,22 +24,6 @@
   }							\
   } while(0)
 
-#define DX_READ_LIST(_bs,_offset,_type,_var,_size)	\
-  do {							\
-							\
-  for (unsigned int _i=0; _i< (_size) ; _i++) {		\
-    uint8_t* _ptr = (uint8_t*) &((_var)[_i]);		\
-    uint32_t _off = (_offset) +  sizeof(uint32_t);	\
-    _off += (sizeof(_type)-sizeof(Metadata))*_i;	\
-							\
-    dxread((_bs),_ptr,sizeof(_type),_off);		\
-							\
-    if ((_var)[_i].meta.corrupted) break;		\
-  }  						        \
-  (_offset) = (_bs)->offset;				\
-							\
-  } while (0)
-
 #define DXP_FIXED(_name,_type)			      \
   DXPARSE(_name,_type) {			      \
   _type* res;					      \
@@ -174,27 +158,27 @@ DexClassDataItem* dx_classdata(ByteStream* bs, uint32_t offset) {
 
   if (res->meta.corrupted) return res;
 
-  /*
-  offset = bs->offset;
-
-  DX_ALLOC_LIST(DexEncodedFieldItem,res->static_fields,
+  DX_ALLOC_LIST(DexEncodedFieldItem*,res->static_fields,
 		ul128toui(res->static_fields_size));
-  DX_ALLOC_LIST(DexEncodedFieldItem,res->instance_fields,
+  DX_ALLOC_LIST(DexEncodedFieldItem*,res->instance_fields,
 		ul128toui(res->instance_fields_size));
-  DX_ALLOC_LIST(DexEncodedMethodItem,res->direct_methods,
+  DX_ALLOC_LIST(DexEncodedMethodItem*,res->direct_methods,
 		ul128toui(res->direct_methods_size));
-  DX_ALLOC_LIST(DexEncodedMethodItem,res->virtual_methods,
+  DX_ALLOC_LIST(DexEncodedMethodItem*,res->virtual_methods,
 		ul128toui(res->virtual_methods_size));
-  
-  DX_READ_LIST(bs,offset,DexEncodedFieldItem,res->static_fields,
-	       ul128toui(res->static_fields_size));
-  DX_READ_LIST(bs,offset,DexEncodedFieldItem,res->instance_fields,
-	       ul128toui(res->instance_fields_size)); 
-  DX_READ_LIST(bs,offset,DexEncodedMethodItem,res->direct_methods,
-	       ul128toui(res->direct_methods_size));
-  DX_READ_LIST(bs,offset,DexEncodedMethodItem,res->virtual_methods,
-	       ul128toui(res->virtual_methods_size));
-  */
+
+  for (i=0; i<ul128toui(res->static_fields_size); i++)
+    res->static_fields[i] = dx_encodedfield(bs,bs->offset);
+
+  for (i=0; i<ul128toui(res->instance_fields_size); i++)
+    res->instance_fields[i] = dx_encodedfield(bs,bs->offset);
+
+  for (i=0; i<ul128toui(res->direct_methods_size); i++)
+    res->direct_methods[i] = dx_encodedmethod(bs,bs->offset);
+
+  for (i=0; i<ul128toui(res->virtual_methods_size); i++)
+    res->virtual_methods[i] = dx_encodedmethod(bs,bs->offset);
+
   return res;
 }
 
@@ -216,10 +200,8 @@ DexTypeList* dx_typelist(ByteStream* bs, uint32_t offset) {
 
   DX_ALLOC_LIST(DexTypeItem*,tl->list,tl->size);
 
-  for (i=0; i<tl->size; i++) {
-    DX_ALLOC(DexTypeItem,tl->list[i]);
-    dxread(bs,(uint8_t*)tl->list[i],sizeof(DexTypeItem));
-  }
+  for (i=0; i<tl->size; i++)
+    tl->list[i] = dx_typeitem(bs,bs->offset);
 
   return tl;
 }
@@ -269,10 +251,8 @@ DexMapList* dx_maplist(ByteStream* bs, uint32_t offset) {
 
   DX_ALLOC_LIST(DexMapItem*,ml->list,ml->size);  
 
-  for (i=0; i<ml->size; i++) {
-    DX_ALLOC(DexMapItem,ml->list[i]);
-    dxread(bs,(uint8_t*)ml->list[i],sizeof(DexMapItem));
-  }
+  for (i=0; i<ml->size; i++)
+    ml->list[i] = dx_mapitem(bs,bs->offset);
 
   return ml;
 }
