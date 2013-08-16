@@ -50,7 +50,9 @@
 						      \
   if (res == NULL) alloc_fail();		      \
 						      \
-  dxread(bs,(uint8_t*)res,sizeof(_type),offset);      \
+  bsseek(bs,offset);				      \
+						      \
+  dxread(bs,(uint8_t*)res,sizeof(_type));	      \
 						      \
   return res;					      \
 }
@@ -62,14 +64,15 @@ void alloc_fail() {
 }
 
 //Read Aux
-int dxread(ByteStream* bs, uint8_t* buf, size_t size, uint32_t offset) {
+int dxread(ByteStream* bs, uint8_t* buf, size_t size) {
   Metadata* meta = (Metadata*) buf;
   uint8_t* ptr = buf += sizeof(Metadata);
   size_t data_size = size - sizeof(Metadata);
-  int ret =  bsread_offset(bs,ptr,data_size,offset);
+  int ret;
 
+  meta->offset = bs->offset;
+  ret =  bsread(bs,ptr,data_size);
   meta->corrupted = (ret != data_size);
-  meta->offset = offset;
 
   return ret;
 }
@@ -199,8 +202,6 @@ DXP_FIXED(dx_typeitem,DexTypeItem);
 
 DexTypeList* dx_typelist(ByteStream* bs, uint32_t offset) {
   DexTypeList* tl;
-  uint8_t* ptr;
-  uint32_t off;
   int ret;
   int i;
 
@@ -208,28 +209,16 @@ DexTypeList* dx_typelist(ByteStream* bs, uint32_t offset) {
 
   DX_ALLOC(DexTypeList,tl);
 
-  ptr = (uint8_t*) &(tl->size);
-  ret = bsread_offset(bs,ptr,sizeof(uint32_t),offset);
+  ret = bsread_offset(bs,(uint8_t*) &(tl->size),sizeof(uint32_t),offset);
 
   tl->meta.corrupted = (ret != sizeof(uint32_t));
-
   if (tl->meta.corrupted) return tl;
 
-  offset += sizeof(uint32_t);
-
-  DX_ALLOC_LIST(DexTypeItem,tl->list,tl->size);
+  DX_ALLOC_LIST(DexTypeItem*,tl->list,tl->size);
 
   for (i=0; i<tl->size; i++) {
-    ptr = (uint8_t*) &(tl->list[i]);
-    
-    off = offset + sizeof(uint32_t) + (sizeof(DexTypeItem)-sizeof(Metadata))*i;
-      
-    dxread(bs,ptr,sizeof(DexTypeItem),off);
-
-    if (tl->list[i].meta.corrupted) {
-      tl->meta.corrupted = 1;
-      break;
-    }
+    DX_ALLOC(DexTypeItem,tl->list[i]);
+    dxread(bs,(uint8_t*)tl->list[i],sizeof(DexTypeItem));
   }
 
   return tl;
@@ -266,8 +255,6 @@ DXP_FIXED(dx_mapitem,DexMapItem)
 
 DexMapList* dx_maplist(ByteStream* bs, uint32_t offset) {
   DexMapList* ml;
-  uint8_t* ptr;
-  uint32_t off;
   int ret;
   int i;
 
@@ -275,28 +262,16 @@ DexMapList* dx_maplist(ByteStream* bs, uint32_t offset) {
 
   DX_ALLOC(DexMapList,ml);
 
-  ptr = (uint8_t*) &(ml->size);
-  ret = bsread_offset(bs,ptr,sizeof(uint32_t),offset);
+  ret = bsread_offset(bs,(uint8_t*)&(ml->size),sizeof(uint32_t),offset);
 
   ml->meta.corrupted = (ret != sizeof(uint32_t));
-
   if (ml->meta.corrupted) return ml;
 
-  offset += sizeof(uint32_t);
-
-  DX_ALLOC_LIST(DexMapItem,ml->list,ml->size);
+  DX_ALLOC_LIST(DexMapItem*,ml->list,ml->size);  
 
   for (i=0; i<ml->size; i++) {
-    ptr = (uint8_t*) &(ml->list[i]);
-    
-    off = offset + sizeof(uint32_t) + (sizeof(DexMapItem)-sizeof(Metadata))*i;
-
-    dxread(bs,ptr,sizeof(DexMapItem),off);
-
-    if (ml->list[i].meta.corrupted) {
-      ml->meta.corrupted = 1;
-      break;
-    }
+    DX_ALLOC(DexMapItem,ml->list[i]);
+    dxread(bs,(uint8_t*)ml->list[i],sizeof(DexMapItem));
   }
 
   return ml;

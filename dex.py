@@ -182,10 +182,10 @@ class DexClassDataItem(Structure):
         ('instance_fields_size',Leb128),
         ('direct_methods_size',Leb128),
         ('virtual_methods_size',Leb128),
-        ('static_fields',POINTER(DexEncodedFieldItem)),
-        ('instance_fields',POINTER(DexEncodedFieldItem)),
-        ('direct_methods',POINTER(DexEncodedMethodItem)),
-        ('virtual_methods',POINTER(DexEncodedMethodItem)),
+        ('static_fields',POINTER(POINTER(DexEncodedFieldItem))),
+        ('instance_fields',POINTER(POINTER(DexEncodedFieldItem))),
+        ('direct_methods',POINTER(POINTER(DexEncodedMethodItem))),
+        ('virtual_methods',POINTER(POINTER(DexEncodedMethodItem))),
         ]
 
 class DexTypeItem(Structure):
@@ -198,7 +198,7 @@ class DexTypeList(Structure):
     _fields_ = [
         ('meta', Metadata),
         ('size', c_uint32),
-        ('list', POINTER(DexTypeItem)),
+        ('list', POINTER(POINTER(DexTypeItem))),
         ]
 
 class DexTryItem(Structure):
@@ -220,7 +220,7 @@ class DexEncodedCatchHandler(Structure):
     _fields_ = [
         ('meta', Metadata),
         ('size', Leb128),
-        ('handlers', POINTER(DexEncodedTypeAddrPair)),
+        ('handlers', POINTER(POINTER(DexEncodedTypeAddrPair))),
         ('catch_all_addr', Leb128)
         ]
 
@@ -228,7 +228,7 @@ class DexEncodedCatchHandlerList(Structure):
     _fields_ = [
         ('meta', Metadata),
         ('size',Leb128),
-        ('list',POINTER(DexEncodedCatchHandler)),
+        ('list',POINTER(POINTER(DexEncodedCatchHandler))),
         ]
 
 class DexCodeItem(Structure):
@@ -241,7 +241,7 @@ class DexCodeItem(Structure):
         ('debug_info_off',c_uint32),
         ('insns_size',c_uint32),
         ('insns',POINTER(c_uint16)),
-        ('tries',POINTER(DexTryItem)),
+        ('tries',POINTER(POINTER(DexTryItem))),
         ('handlers',DexEncodedCatchHandlerList),
         ]
 
@@ -258,12 +258,11 @@ class DexMapList(Structure):
     _fields_ = [
         ('meta', Metadata),
         ('size', c_uint32),
-        ('list', POINTER(DexMapItem)),
+        ('list', POINTER(POINTER(DexMapItem))),
         ]
 
 #Load Library
 dxlib = cdll.LoadLibrary("./dexterity.so")
-
 # ByteStream prototypes
 dxlib.bsalloc.argtypes = (c_uint,)
 dxlib.bsalloc.restype = POINTER(_ByteStream)

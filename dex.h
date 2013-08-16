@@ -111,12 +111,10 @@ typedef struct _DexClassDataItem {
   leb128_t direct_methods_size;
   leb128_t virtual_methods_size;
 
-  DexEncodedFieldItem* static_fields;
-  DexEncodedFieldItem* instance_fields;
-  DexEncodedMethodItem* direct_methods;
-  DexEncodedMethodItem* virtual_methods;
-
-  void *_data;
+  DexEncodedFieldItem** static_fields;
+  DexEncodedFieldItem** instance_fields;
+  DexEncodedMethodItem** direct_methods;
+  DexEncodedMethodItem** virtual_methods;
 } DexClassDataItem;
 
 typedef struct _DexTypeItem {
@@ -127,7 +125,7 @@ typedef struct _DexTypeItem {
 typedef struct _DexTypeList {
   Metadata meta;
   uint32_t size;
-  DexTypeItem* list;
+  DexTypeItem** list;
 } DexTypeList;
 
 typedef struct _DexTryItem {
@@ -146,14 +144,14 @@ typedef struct _DexEncodedTypeAddrPair {
 typedef struct _DexEncodedCatchHandler {
   Metadata meta;
   leb128_t size;
-  DexEncodedTypeAddrPair *handlers;
+  DexEncodedTypeAddrPair** handlers;
   leb128_t catch_all_addr;
 } DexEncodedCatchHandler;
 
 typedef struct _DexEncodedCatchHandlerList {
   Metadata meta;
   leb128_t size;
-  DexEncodedCatchHandler *list;
+  DexEncodedCatchHandler** list;
 } DexEncodedCatchHandlerList;
 
 typedef struct _DexCodeItem {
@@ -165,7 +163,7 @@ typedef struct _DexCodeItem {
   uint32_t debug_info_off;
   uint32_t insns_size;
   uint16_t* insns;
-  DexTryItem *tries;
+  DexTryItem** tries;
   DexEncodedCatchHandlerList handlers;
 } DexCodeItem;
 
@@ -180,7 +178,7 @@ typedef struct _DexMapItem {
 typedef struct _DexMapList {
   Metadata meta;
   uint32_t size;
-  DexMapItem* list;
+  DexMapItem** list;
 } DexMapList;
 
 typedef struct _Dex {

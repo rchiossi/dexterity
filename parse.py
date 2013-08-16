@@ -5,7 +5,11 @@ import ctypes
 from dex import DexParser
 from dex import dxprint
 
+from dxprinter import DexPrinter
+
 def main():
+    printer = DexPrinter()
+
     dxp = DexParser("./tests/classes.dex")
 
     header = dxp.item('header')
@@ -28,27 +32,36 @@ def main():
 
     class_data_list = dxp.table('classdata',class_defs,'class_data_off')
 
-#    dxprint(header)
+#    printer.header(header)
 
-#    dxprint(map_list)
+#    printer.maplist(map_list)
 
 #    for item in string_ids:
-#        dxprint(item)
+#        printer.stringid(item)
+
+#    for item in type_ids:
+#        printer.typeid(item)
 
 #    for item in proto_ids:
-#        dxprint(item) 
+#        printer.protoid(item)
+
+#    for item in field_ids:
+#        printer.fieldid(item)
+
+#    for item in method_ids:
+#        printer.methodid(item)
 
 #    for item in class_defs:
-#        dxprint(item)
+#        printer.classdef(item)
 
 #    for item in type_lists:
-#        dxprint(item) 
+#        printer.typelist(item)
 
 #    for item in string_data_list:
-#        print str(item.data)[:item.size.uleb()]
+#        printer.stringdata(item)
 
     for item in class_data_list:
-        dxprint(item) 
+        printer.classdata(item)
 
 
 
