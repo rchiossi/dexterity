@@ -1,15 +1,15 @@
 #!/usr/bin/python
 
-import ctypes
+import sys
 
 from dex import DexParser
-
 from dxprinter import DexPrinter
 
-def main():
-    printer = DexPrinter(True)
+def main():    
+    target = sys.argv[-1]
+    print 'Parsing Dex: %s' % target
 
-    dxp = DexParser("./tests/classes.dex")
+    dxp = DexParser(target)
 
     #header
     header = dxp.item('header')
@@ -38,9 +38,8 @@ def main():
 
     #data from class data
     code_list = []
-    
+
     for class_data in class_data_list:
-#        printer.classdata(class_data)
         for i in xrange(class_data.direct_methods_size.uleb()):
             method = class_data.direct_methods[i].contents
             if method.code_off.uleb() != 0:
@@ -51,42 +50,111 @@ def main():
             if method.code_off.uleb() != 0:
                 code_list.append(dxp.item('codeitem',method.code_off.uleb()))
 
-    for item in code_list:
-        printer.codeitem(item)
-    
-
-#    printer.header(header)
-
-#    printer.maplist(map_list)
-
-#    for item in string_ids:
-#        printer.stringid(item)
-
-#    for item in type_ids:
-#        printer.typeid(item)
-
-#    for item in proto_ids:
-#        printer.protoid(item)
-
-#    for item in field_ids:
-#        printer.fieldid(item)
-
-#    for item in method_ids:
-#        printer.methodid(item)
-
-#    for item in class_defs:
-#        printer.classdef(item)
-
-#    for item in type_lists:
-#        printer.typelist(item)
-
-#    for item in string_data_list:
-#        printer.stringdata(item)
-
-#    for item in class_data_list:
-#        printer.classdata(item)
 
 
+
+    opts = ' '.join(sys.argv[1:-1]).split('-')
+    args = {}
+
+    printer = DexPrinter('debug' in opts)
+
+    for i,opt in enumerate(opts):
+        if opt in ['','debug']: continue
+
+        if opt in ['H','X']:
+            args[opt] = True
+
+        elif opt.split(' ')[0] in ['S','T','P','F','M','C','t','s','c','B']:
+            if len(opt.split()) == 1:
+                args[opt] = -1
+            elif opt.split(' ')[1].isdigit():
+                args[opt.split(' ')[0]] = int(opt.split(' ')[1])
+            else:
+                print "Invalid Argument for %s : %s" % opt.split(' ')
+                sys.exit(-1)
+        else:
+            print 'Unknown Option: -%s' % opt.split(' ')[0]
+            sys.exit(-1)
+
+
+    if 'H' in args.keys():
+        printer.header(header)
+
+    elif 'X' in args.keys():
+        printer.maplist(map_list)            
+
+    elif 'S' in args.keys():
+        if args.get('S') < 0:
+            for item in string_ids:
+                printer.stringid(item)
+        else:
+            printer.stringid(string_ids[args.get('S')])
+
+    elif 'T' in args.keys():
+        if args.get('T') < 0:
+            for item in type_ids:
+                printer.typeid(item)
+        else:
+            printer.typeid(type_ids[args.get('T')])
+
+    elif 'P' in args.keys():
+        if args.get('P') < 0:
+            for item in proto_ids:
+                printer.protoid(item)
+        else:
+            printer.protoid(proto_ids[args.get('P')])
+
+    elif 'F' in args.keys():
+        if args.get('F') < 0:
+            for item in field_ids:
+                printer.fieldid(item)
+        else:
+            printer.fieldid(field_ids[args.get('F')])
+
+    elif 'M' in args.keys():
+        if args.get('M') < 0:
+            for item in method_ids:
+                printer.methodid(item)
+        else:
+            printer.methodid(method_ids[args.get('M')])
+
+    elif 'C' in args.keys():
+        if args.get('C') < 0:
+            for item in class_defs:
+                printer.classdef(item)
+        else:
+            printer.classdef(class_defs[args.get('C')])
+
+    elif 't' in args.keys():
+        if args.get('t') < 0:
+            for item in type_lists:
+                printer.typelist(item)
+        else:
+            printer.typelist(type_lists[args.get('t')])
+
+    elif 's' in args.keys():
+        if args.get('s') < 0:
+            for item in string_data_list:
+                printer.stringdata(item)
+        else:
+            printer.stringdata(string_data_list[args.get('s')])
+
+    elif 'c' in args.keys():
+        if args.get('c') < 0:
+            for item in class_data_list:
+                printer.classdata(item)
+        else:
+            printer.classdata(class_data_list[args.get('c')])
+
+    elif 'B' in args.keys():
+        if args.get('B') < 0:
+            for item in code_list:
+                printer.codeitem(item)
+        else:
+            printer.codeitem(code_list[args.get('B')])
+
+    else:
+        print 'Unknown Options.'
 
 if __name__ == '__main__':
     main()
