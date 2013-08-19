@@ -163,8 +163,9 @@ typedef struct _DexCodeItem {
   uint32_t debug_info_off;
   uint32_t insns_size;
   uint16_t* insns;
+  uint16_t padding;
   DexTryItem** tries;
-  DexEncodedCatchHandlerList handlers;
+  DexEncodedCatchHandlerList* handlers;
 } DexCodeItem;
 
 typedef struct _DexMapItem {

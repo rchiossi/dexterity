@@ -223,6 +223,90 @@ class DexPrinter (object):
         for i in xrange(obj.size):
             self.typeitem(obj.list[i].contents,pad)
 
+    def tryitem(self,obj,pad=0):
+        self.print_label("TryItem",pad)
+
+        size = self.max_attr(obj)
+        pad +=2
+
+        self.meta(obj.meta,pad)
+
+        self.print_attr('start_addr',hex(obj.start_addr),pad,size)
+        self.print_attr('insns_count',obj.insns_count,pad,size)
+        self.print_attr('handler_off',obj.handler_off,pad,size)
+
+    def encodedtypeaddrpair(self,obj,pad=0):
+        self.print_label("EncodedTypeAddrPair",pad)
+
+        size = self.max_attr(obj)
+        pad +=2
+
+        self.meta(obj.meta,pad)
+
+        self.print_attr('type_idx',obj.type_idx.uleb(),pad,size)
+        self.print_attr('addr',hex(obj.addr.uleb()),pad,size)
+
+    def encodedcatchhandler(self,obj,pad=0):
+        self.print_label("EncodedCatchHandler",pad)
+
+        size = self.max_attr(obj)
+        pad +=2
+
+        self.meta(obj.meta,pad)
+
+        self.print_attr('size',obj.size.uleb(),pad,size)
+
+        self.print_label('handlers',pad)
+        for i in xrange(abs(obj.size.sleb())):
+            self.encodedtypeaddrpair(obj.handlers[i].contents,pad)
+
+        if obj.size.sleb() <= 0:
+            self.print_attr('catch_all_addr',hex(obj.catch_all_addr.uleb()),pad,size)
+
+    def encodedcatchhandlerlist(self,obj,pad=0):
+        self.print_label("EncodedCatchHandlerList",pad)
+
+        size = self.max_attr(obj)
+        pad +=2
+
+        self.meta(obj.meta,pad)
+
+        self.print_attr('size',obj.size.sleb(),pad,size)
+
+        self.print_label('list',pad)
+        for i in xrange(obj.size.uleb()):
+            self.encodedcatchhandler(obj.list[i].contents,pad+2)
+
+    def codeitem(self,obj,pad=0):
+        self.print_label("CodeItem",pad)
+
+        size = self.max_attr(obj)
+        pad +=2
+
+        self.meta(obj.meta,pad)
+
+        self.print_attr('registers_size',obj.registers_size,pad,size)
+        self.print_attr('ins_size',obj.ins_size,pad,size)
+        self.print_attr('outs_size',obj.outs_size,pad,size)
+        self.print_attr('tries_size',obj.tries_size,pad,size)
+        self.print_attr('debug_info_off',hex(obj.debug_info_off),pad,size)
+        self.print_attr('insns_size',obj.insns_size,pad,size)
+
+        self.print_label('insns',pad)
+        for i in xrange(obj.insns_size):
+            print ' '*(pad+2) + '%04x' % obj.insns[i]
+
+        self.print_label('padding',pad)
+        print ' '*pad + hex(obj.padding)
+        
+        self.print_label('tries',pad)
+        for i in xrange(obj.tries_size):
+            self.tryitem(obj.tries[i].contents,pad+2)
+
+        self.print_label('handlers',pad)
+        if obj.tries_size > 0:
+            self.encodedcatchhandlerlist(obj.handlers.contents,pad+2)
+
     def mapitem(self,obj,pad=0):
         self.print_label("MapItem",pad)
         

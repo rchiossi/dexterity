@@ -237,12 +237,15 @@ DexEncodedCatchHandler* dx_encodedcatchhandler(ByteStream* bs, uint32_t offset) 
 
   check  = l128read(bs,&(res->size));
 
+  res->meta.corrupted = check;
+  if (res->meta.corrupted) return res;
+
   DX_ALLOC_LIST(DexEncodedTypeAddrPair*,res->handlers,ul128toui(res->size));
 
-  for (i=0; i<ul128toui(res->size); i++)
+  for (i=0; i<abs(sl128toui(res->size)); i++)
     res->handlers[i] = dx_encodedtypeaddrpair(bs,bs->offset);
 
-  if (ul128toui(res->size) > 0) 
+  if (sl128toui(res->size) <= 0) 
     check |= l128read(bs,&(res->catch_all_addr));
 
   res->meta.corrupted = check || bs->exhausted;
@@ -263,20 +266,55 @@ DexEncodedCatchHandlerList* dx_encodedcatchhandlerlist(ByteStream* bs, uint32_t 
 
   check  = l128read(bs,&(res->size));
 
-  res->meta.corrupted = check || bs->exhausted;
+  res->meta.corrupted = check;
+  if (res->meta.corrupted) return res;
 
   DX_ALLOC_LIST(DexEncodedCatchHandler*,res->list,ul128toui(res->size));
 
   for (i=0; i<ul128toui(res->size); i++)
     res->list[i] = dx_encodedcatchhandler(bs,bs->offset);
+
+  res->meta.corrupted = check || bs->exhausted;
   
   return res;
 }
 
 DexCodeItem* dx_codeitem(ByteStream* bs, uint32_t offset) {
-  
+  DexCodeItem* res;
+  int i;
 
-  return NULL;
+  DX_ALLOC(DexCodeItem,res);
+
+  bsseek(bs,offset);
+
+  bsread(bs,(uint8_t*) &(res->registers_size),sizeof(uint16_t));
+  bsread(bs,(uint8_t*) &(res->ins_size),sizeof(uint16_t));
+  bsread(bs,(uint8_t*) &(res->outs_size),sizeof(uint16_t));
+  bsread(bs,(uint8_t*) &(res->tries_size),sizeof(uint16_t));
+  bsread(bs,(uint8_t*) &(res->debug_info_off),sizeof(uint32_t));
+  bsread(bs,(uint8_t*) &(res->insns_size),sizeof(uint32_t));
+
+  res->meta.corrupted = bs->exhausted;
+  if (res->meta.corrupted) return res;
+
+  DX_ALLOC_LIST(uint16_t,res->insns,res->insns_size);
+
+  for (i=0; i<res->insns_size; i++)
+    bsread(bs,(uint8_t*) &(res->insns[i]),sizeof(uint16_t));
+
+  if (res->tries_size > 0) {
+    if (res->insns_size % 2 != 0)
+      bsread(bs,(uint8_t*) &(res->padding),sizeof(uint16_t));
+
+    DX_ALLOC_LIST(DexTryItem*,res->tries,res->tries_size); 
+   
+    for (i=0; i<res->tries_size; i++)
+      res->tries[i] = dx_tryitem(bs,bs->offset);
+
+    res->handlers = dx_encodedcatchhandlerlist(bs,bs->offset);    
+  }
+
+  return res;
 }
 
 DXP_FIXED(dx_mapitem,DexMapItem)

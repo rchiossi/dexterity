@@ -241,8 +241,9 @@ class DexCodeItem(Structure):
         ('debug_info_off',c_uint32),
         ('insns_size',c_uint32),
         ('insns',POINTER(c_uint16)),
+        ('padding',c_uint16),
         ('tries',POINTER(POINTER(DexTryItem))),
-        ('handlers',DexEncodedCatchHandlerList),
+        ('handlers',POINTER(DexEncodedCatchHandlerList)),
         ]
 
 class DexMapItem(Structure):
@@ -355,37 +356,7 @@ class DexParser(object):
 
         return res
 
-    def class_data(self,offset=None):
+    def raw(self,offset=None,size=0):
         if offset != None: self.seek(offset)
 
-        obj = dxlib.dx_classdata(self.bs._bs,self.bs._bs.contents.offset);
-
-        return obj
-
-def dxprint(obj,pad=0):
-    print ' '*pad + "%s:" % obj.__class__.__name__
-
-    for name,a_class in obj._fields_:
-        val = getattr(obj,name)
- 
-        if bool(val) == 0:
-            print ' '*(pad+2) + "%s: None" % name
-        elif issubclass(a_class,(Leb128,)):       
-#            print ' '*(pad+2) + "%s: %d" % (name,dxlib.ul128toui(val))
-            dxprint(val,pad+2)
-        elif issubclass(a_class,(Structure,)):
-            dxprint(val,pad+2)
-        elif issubclass(a_class,(Array,)):
-            data = ''.join(['%02x' % x for x in val])
-            print ' '* pad + "  %s: %s" % (name,data)
-        elif issubclass(a_class,(_Pointer,)):
-            print ' '*(pad+2) + '>>> List - Fist item:'
-            dxprint(val[0],pad+4)
-        elif issubclass(a_class,(c_char_p,)):
-            print ' '* pad + "  %s: %s" % (name,val)
-        elif name.find('size') != -1:
-            print ' '*pad + "  %s: %d" % (name,val)
-        elif name.find('idx') != -1:
-            print ' '*pad + "  %s: %d" % (name,val)
-        else:
-            print ' '*pad + "  %s: 0x%x" % (name,val)
+        return self.bs.read(size)

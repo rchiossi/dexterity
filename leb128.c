@@ -66,7 +66,7 @@ unsigned int sl128toui(leb128_t sleb) {
   
   val = ul128toui(sleb);
 
-  if (sleb.data[sleb.size-1] & 0x40 != 0) {
+  if ((sleb.data[sleb.size-1] & 0x40) != 0) {
     val = val | ~((1 << (sleb.size*7))-1);
   }
 
