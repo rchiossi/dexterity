@@ -53,7 +53,7 @@ def main():
 
 
 
-    opts = ' '.join(sys.argv[1:-1]).split('-')
+    opts = ''.join(sys.argv[1:-1]).split('-')
     args = {}
 
     printer = DexPrinter('debug' in opts)
