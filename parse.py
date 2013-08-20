@@ -40,6 +40,8 @@ def main():
     code_list = []  
 
     for class_data in class_data_list:
+        if class_data.meta.corrupted == True: continue
+
         for i in xrange(class_data.direct_methods_size.uleb()):
             method = class_data.direct_methods[i].contents
             if method.code_off.uleb() != 0:
