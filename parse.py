@@ -36,8 +36,8 @@ def main():
     class_data_list = dxp.table('classdata',class_defs,'class_data_off')
     #class_statics = dxp.table('encodedarray',class_defs,'static_values_off')
 
-    #data from class data
-    code_list = []
+    #data from class data    
+    code_list = []  
 
     for class_data in class_data_list:
         for i in xrange(class_data.direct_methods_size.uleb()):
@@ -50,8 +50,8 @@ def main():
             if method.code_off.uleb() != 0:
                 code_list.append(dxp.item('codeitem',method.code_off.uleb()))
 
-
-
+    #data from code item
+    debug_info_list = dxp.table('debuginfo',code_list,'debug_info_off')
 
     opts = ''.join(sys.argv[1:-1]).split('-')
     args = {}
@@ -64,7 +64,7 @@ def main():
         if opt in ['H','X']:
             args[opt] = True
 
-        elif opt.split(' ')[0] in ['S','T','P','F','M','C','t','s','c','B']:
+        elif opt.split(' ')[0] in ['S','T','P','F','M','C','t','s','c','B','D']:
             if len(opt.split()) == 1:
                 args[opt] = -1
             elif opt.split(' ')[1].isdigit():
@@ -152,6 +152,13 @@ def main():
                 printer.codeitem(item)
         else:
             printer.codeitem(code_list[args.get('B')])
+
+    elif 'D' in args.keys():
+        if args.get('D') < 0:
+            for item in debug_info_list:
+                printer.debuginfo(item)
+        else:
+            printer.debuginfo(debug_info_list[args.get('B')])
 
     else:
         print 'Unknown Options.'

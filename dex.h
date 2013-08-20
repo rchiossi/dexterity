@@ -168,6 +168,13 @@ typedef struct _DexCodeItem {
   DexEncodedCatchHandlerList* handlers;
 } DexCodeItem;
 
+typedef struct _DexDebugInfo {
+  Metadata meta;
+  leb128_t line_start;
+  leb128_t parameters_size;
+  leb128_t* parameter_names;
+} DexDebugInfo;
+
 typedef struct _DexMapItem {
   Metadata meta;
   uint16_t type;
@@ -181,6 +188,8 @@ typedef struct _DexMapList {
   uint32_t size;
   DexMapItem** list;
 } DexMapList;
+
+
 
 typedef struct _Dex {
   DexHeaderItem* header;
@@ -209,6 +218,7 @@ DXPARSE(dx_encodedtypeaddrpair,DexEncodedTypeAddrPair);
 DXPARSE(dx_encodedcatchhandler,DexEncodedCatchHandler);
 DXPARSE(dx_encodedcatchhandlerlist,DexEncodedCatchHandlerList);
 DXPARSE(dx_codeitem,DexCodeItem);
+DXPARSE(dx_debuginfo,DexDebugInfo);
 DXPARSE(dx_mapitem,DexMapItem);
 DXPARSE(dx_maplist,DexMapList);
 

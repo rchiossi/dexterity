@@ -254,7 +254,7 @@ class DexPrinter (object):
 
         self.meta(obj.meta,pad)
 
-        self.print_attr('size',obj.size.uleb(),pad,size)
+        self.print_attr('size',obj.size.sleb(),pad,size)
 
         self.print_label('handlers',pad)
         for i in xrange(abs(obj.size.sleb())):
@@ -296,8 +296,7 @@ class DexPrinter (object):
         for i in xrange(obj.insns_size):
             print ' '*(pad+2) + '%04x' % obj.insns[i]
 
-        self.print_label('padding',pad)
-        print ' '*pad + hex(obj.padding)
+        self.print_attr('padding',hex(obj.padding),pad,size)
         
         self.print_label('tries',pad)
         for i in xrange(obj.tries_size):
@@ -306,6 +305,21 @@ class DexPrinter (object):
         self.print_label('handlers',pad)
         if obj.tries_size > 0:
             self.encodedcatchhandlerlist(obj.handlers.contents,pad+2)
+
+    def debuginfo(self,obj,pad=0):
+        self.print_label("DebugInfo",pad)
+
+        size = self.max_attr(obj)
+        pad +=2
+
+        self.meta(obj.meta,pad)
+
+        self.print_attr('line_start',obj.line_start.uleb(),pad,size)
+        self.print_attr('parameters_size',obj.parameters_size.uleb(),pad,size)
+
+        self.print_label('parameter_names',pad)
+        for i in xrange(obj.parameters_size.uleb()):
+            print ' '*(pad+2) + '%d' % obj.parameter_names[i].ulebp1()
 
     def mapitem(self,obj,pad=0):
         self.print_label("MapItem",pad)

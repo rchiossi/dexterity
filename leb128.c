@@ -57,12 +57,12 @@ unsigned int ul128toui(leb128_t uleb) {
   return val;
 }
 
-unsigned int ul128p1toui(leb128_t ulebp1) {  
+int ul128p1toui(leb128_t ulebp1) {  
   return ul128toui(ulebp1)-1;
 }
 
-unsigned int sl128toui(leb128_t sleb) {
-  unsigned int val = 0;
+int sl128toui(leb128_t sleb) {
+  int val = 0;
   
   val = ul128toui(sleb);
 

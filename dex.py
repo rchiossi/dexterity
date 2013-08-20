@@ -246,6 +246,14 @@ class DexCodeItem(Structure):
         ('handlers',POINTER(DexEncodedCatchHandlerList)),
         ]
 
+class DexDebugInfo(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('line_start', Leb128),
+        ('parameters_size', Leb128),
+        ('parameter_names', POINTER(Leb128)), 
+        ]
+
 class DexMapItem(Structure):
     _fields_ = [
         ('meta', Metadata),
@@ -291,10 +299,10 @@ dxlib.ul128toui.argtypes = (Leb128,)
 dxlib.ul128toui.restype = c_uint
 
 dxlib.ul128p1toui.argtypes = (Leb128,)
-dxlib.ul128p1toui.restype = c_uint
+dxlib.ul128p1toui.restype = c_int
 
 dxlib.sl128toui.argtypes = (Leb128,)
-dxlib.sl128toui.restype = c_uint
+dxlib.sl128toui.restype = c_int
 
 #Dex prototypes
 def DXPARSE(name,res):
@@ -319,6 +327,7 @@ DXPARSE('dx_encodedtypeaddrpair',DexEncodedTypeAddrPair)
 DXPARSE('dx_encodedcatchhandler',DexEncodedCatchHandler)
 DXPARSE('dx_encodedcatchhandlerlist',DexEncodedCatchHandlerList)
 DXPARSE('dx_codeitem',DexCodeItem)
+DXPARSE('dx_debuginfo',DexDebugInfo)
 DXPARSE('dx_mapitem',DexMapItem)
 DXPARSE('dx_maplist',DexMapList)
 

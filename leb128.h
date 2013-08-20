@@ -15,7 +15,7 @@ int l128read(ByteStream* bs, leb128_t* leb);
 int l128read_offset(ByteStream* bs, leb128_t* leb, uint32_t offset);
 
 unsigned int ul128toui(leb128_t uleb);
-unsigned int ul128p1toui(leb128_t ulebp1);
-unsigned int sl128toui(leb128_t sleb);
+int ul128p1toui(leb128_t ulebp1);
+int sl128toui(leb128_t sleb);
 
 #endif //__LEB128__

@@ -317,6 +317,31 @@ DexCodeItem* dx_codeitem(ByteStream* bs, uint32_t offset) {
   return res;
 }
 
+DexDebugInfo* dx_debuginfo(ByteStream* bs, uint32_t offset) {
+  DexDebugInfo* res;
+  int check;
+  int i;
+
+  if (bs == NULL) return NULL;
+
+  DX_ALLOC(DexDebugInfo,res);
+
+  bsseek(bs,offset);
+
+  check  = l128read(bs,&(res->line_start));
+  check |= l128read(bs,&(res->parameters_size));
+
+  res->meta.corrupted = check || bs->exhausted;
+  if (res->meta.corrupted) return res;
+
+  DX_ALLOC_LIST(leb128_t,res->parameter_names,ul128toui(res->parameters_size));
+
+  for (i=0; i<ul128toui(res->parameters_size); i++)
+    l128read(bs,&(res->parameter_names[i]));
+
+  return res;
+}
+
 DXP_FIXED(dx_mapitem,DexMapItem)
 
 DexMapList* dx_maplist(ByteStream* bs, uint32_t offset) {
