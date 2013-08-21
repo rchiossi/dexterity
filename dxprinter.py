@@ -293,8 +293,15 @@ class DexPrinter (object):
         self.print_attr('insns_size',obj.insns_size,pad,size)
 
         self.print_label('insns',pad)
-        for i in xrange(obj.insns_size):
-            print ' '*(pad+2) + '%04x' % obj.insns[i]
+        line = ' '*(pad+2)
+        for i in xrange(obj.insns_size):            
+            line += '%04x' % obj.insns[i]
+
+            if (len(line) % 60) == 0:
+                print line
+                line =' '*(pad+2)
+
+        print line
 
         self.print_attr('padding',hex(obj.padding),pad,size)
         
@@ -320,6 +327,21 @@ class DexPrinter (object):
         self.print_label('parameter_names',pad)
         for i in xrange(obj.parameters_size.uleb()):
             print ' '*(pad+2) + '%d' % obj.parameter_names[i].ulebp1()
+
+        self.print_label('state_machine',pad)
+        line = ' '*(pad+2)
+        i = 0
+        while obj.state_machine[i] != 0x0:
+            line += '%02x' % obj.state_machine[i]
+
+            if (len(line) % 60) == 0:
+                print line
+                line =' '*(pad+2)
+
+            i+=1
+
+        line += '00'
+        print line
 
     def mapitem(self,obj,pad=0):
         self.print_label("MapItem",pad)

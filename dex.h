@@ -173,6 +173,7 @@ typedef struct _DexDebugInfo {
   leb128_t line_start;
   leb128_t parameters_size;
   leb128_t* parameter_names;
+  uint8_t* state_machine;
 } DexDebugInfo;
 
 typedef struct _DexMapItem {
@@ -221,6 +222,8 @@ DXPARSE(dx_codeitem,DexCodeItem);
 DXPARSE(dx_debuginfo,DexDebugInfo);
 DXPARSE(dx_mapitem,DexMapItem);
 DXPARSE(dx_maplist,DexMapList);
+
+uint8_t* dx_debug_state_machine(ByteStream* bs, uint32_t offset);
 
 //Build
 #define DXBUILD(_name,_type) void _name (ByteStream* bs, _type* obj)

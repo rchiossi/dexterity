@@ -339,6 +339,8 @@ DexDebugInfo* dx_debuginfo(ByteStream* bs, uint32_t offset) {
   for (i=0; i<ul128toui(res->parameters_size); i++)
     l128read(bs,&(res->parameter_names[i]));
 
+  res->state_machine = dx_debug_state_machine(bs,bs->offset);
+
   return res;
 }
 
@@ -364,4 +366,49 @@ DexMapList* dx_maplist(ByteStream* bs, uint32_t offset) {
     ml->list[i] = dx_mapitem(bs,bs->offset);
 
   return ml;
+}
+
+uint8_t* dx_debug_state_machine(ByteStream* bs, uint32_t offset) {
+  unsigned int size = 1;
+  char opcode;
+  leb128_t leb;
+  uint8_t* res;
+
+  bsseek(bs,offset);
+  bsread(bs,&opcode,1);
+
+  while (opcode != 0x0) {
+    switch (opcode) {
+    case 0x1:
+    case 0x2:
+    case 0x5:
+    case 0x6:
+    case 0x9:
+      l128read(bs,&leb);
+      break;
+    case 0x3:
+      l128read(bs,&leb);
+      l128read(bs,&leb);
+      l128read(bs,&leb);
+      break;
+    case 0x4:
+      l128read(bs,&leb);
+      l128read(bs,&leb);
+      l128read(bs,&leb);
+      l128read(bs,&leb);
+    default:
+      break;
+    }
+
+    bsread(bs,&opcode,1);
+  }
+
+  size = bs->offset - offset;
+
+  DX_ALLOC_LIST(uint8_t,res,size);  
+
+  bsseek(bs,offset);
+  bsread(bs,res,size);
+
+  return res;    
 }

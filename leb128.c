@@ -1,7 +1,6 @@
 #include <stdint.h>
 
 #include "bytestream.h"
-
 #include "leb128.h"
 
 unsigned int l128size(ByteStream* bs) {
@@ -44,7 +43,6 @@ int l128read_offset(ByteStream* bs, leb128_t* leb, uint32_t offset) {
 
   return l128read(bs,leb);
 }
-
 
 unsigned int ul128toui(leb128_t uleb) {
   unsigned int val = 0;

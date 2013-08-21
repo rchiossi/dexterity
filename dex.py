@@ -252,6 +252,7 @@ class DexDebugInfo(Structure):
         ('line_start', Leb128),
         ('parameters_size', Leb128),
         ('parameter_names', POINTER(Leb128)), 
+        ('state_machine', POINTER(c_uint8)), 
         ]
 
 class DexMapItem(Structure):
@@ -331,6 +332,9 @@ DXPARSE('dx_debuginfo',DexDebugInfo)
 DXPARSE('dx_mapitem',DexMapItem)
 DXPARSE('dx_maplist',DexMapList)
 
+dxlib.dx_debug_state_machine.argtypes = (POINTER(_ByteStream),c_uint32)
+dxlib.dx_debug_state_machine.restype = POINTER(c_uint8)
+
 #DexParser
 class DexParser(object):
     def __init__(self,filename):
@@ -369,3 +373,8 @@ class DexParser(object):
         if offset != None: self.seek(offset)
 
         return self.bs.read(size)
+
+    def debug_state_machine(self,offset=None):
+        if offset != None: self.seek(offset)
+
+        return dxlib.dx_debug_state_machine(self.bs._bs,self.bs._bs.contents.offset)
