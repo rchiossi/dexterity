@@ -271,6 +271,35 @@ class DexMapList(Structure):
         ('list', POINTER(POINTER(DexMapItem))),
         ]
 
+class DexEncodedValue(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('argtype', c_uint8),
+        ('value', POINTER(c_uint8)),
+        ]
+
+class DexEncodedArray(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('size', Leb128),
+        ('values', POINTER(POINTER(DexEncodedValue))),
+        ]
+
+class DexAnnotationElement(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('name_idx', Leb128),
+        ('value', POINTER(DexEncodedValue)),
+        ]
+
+class DexEncodedAnnotation(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('type_idx', Leb128),
+        ('size', Leb128),
+        ('elements', POINTER(POINTER(DexAnnotationElement))),
+        ]
+
 #Load Library
 dxlib = cdll.LoadLibrary("./dexterity.so")
 # ByteStream prototypes
@@ -331,6 +360,11 @@ DXPARSE('dx_codeitem',DexCodeItem)
 DXPARSE('dx_debuginfo',DexDebugInfo)
 DXPARSE('dx_mapitem',DexMapItem)
 DXPARSE('dx_maplist',DexMapList)
+
+DXPARSE('dx_encodedvalue',DexEncodedValue);
+DXPARSE('dx_encodedarray',DexEncodedArray);
+DXPARSE('dx_annotationelement',DexAnnotationElement);
+DXPARSE('dx_encodedannotation',DexEncodedAnnotation);
 
 dxlib.dx_debug_state_machine.argtypes = (POINTER(_ByteStream),c_uint32)
 dxlib.dx_debug_state_machine.restype = POINTER(c_uint8)

@@ -347,26 +347,157 @@ DexDebugInfo* dx_debuginfo(ByteStream* bs, uint32_t offset) {
 DXP_FIXED(dx_mapitem,DexMapItem)
 
 DexMapList* dx_maplist(ByteStream* bs, uint32_t offset) {
-  DexMapList* ml;
-  int ret;
+  DexMapList* res;
+  int check;
   int i;
 
   if (bs == NULL) return NULL;
 
-  DX_ALLOC(DexMapList,ml);
+  DX_ALLOC(DexMapList,res);
 
-  ret = bsread_offset(bs,(uint8_t*)&(ml->size),sizeof(uint32_t),offset);
+  check = bsread_offset(bs,(uint8_t*)&(res->size),sizeof(uint32_t),offset);
 
-  ml->meta.corrupted = (ret != sizeof(uint32_t));
-  if (ml->meta.corrupted) return ml;
+  res->meta.corrupted = (check != sizeof(uint32_t));
+  if (res->meta.corrupted) return res;
 
-  DX_ALLOC_LIST(DexMapItem*,ml->list,ml->size);  
+  DX_ALLOC_LIST(DexMapItem*,res->list,res->size);  
 
-  for (i=0; i<ml->size; i++)
-    ml->list[i] = dx_mapitem(bs,bs->offset);
+  for (i=0; i<res->size; i++)
+    res->list[i] = dx_mapitem(bs,bs->offset);
 
-  return ml;
+  return res;
 }
+
+DexEncodedValue* dx_encodedvalue(ByteStream* bs, uint32_t offset) {
+  DexEncodedValue* res;
+  int check;
+  int i;
+
+  uint8_t value_type;
+  uint8_t value_arg;
+
+  if (bs == NULL) return NULL;
+
+  bsseek(bs,offset);
+
+  DX_ALLOC(DexEncodedValue,res);
+
+  check = bsread(bs,(uint8_t*)&(res->argtype),sizeof(uint8_t));
+
+  res->meta.corrupted = (check != sizeof(uint8_t));
+  if (res->meta.corrupted) return res;
+
+  value_type = (res->argtype & 0x1f);
+  value_arg  = ((res->argtype >> 5) & 0x7);
+	       
+  switch (value_type) {
+  case 0x00:
+    DX_ALLOC_LIST(uint8_t,res->value,1);
+    bsread(bs,(uint8_t*) res->value,sizeof(uint8_t));
+    break;
+  case 0x02:
+  case 0x03:
+  case 0x04:
+  case 0x06:
+  case 0x10:
+  case 0x11:
+  case 0x17:
+  case 0x18:
+  case 0x19:
+  case 0x1a:
+  case 0x1b:
+    DX_ALLOC_LIST(uint8_t,res->value,value_arg+1);
+
+    for (i=0; i<value_arg+1; i++)
+      bsread(bs,(uint8_t*) &(res->value[i]),sizeof(uint8_t));   
+
+    break;
+  case 0x1c:
+    res->value = (uint8_t*) dx_encodedarray(bs,bs->offset);
+    break;
+  case 0x1d:
+    res->value = (uint8_t*) dx_encodedannotation(bs,bs->offset);
+    break;
+  case 0x1e:
+  case 0x1f:
+    res->value = NULL;
+  default:
+    res->meta.corrupted = 1;
+    res->value = (uint8_t*) -1;
+  }
+
+  return res;
+}
+
+DexEncodedArray* dx_encodedarray(ByteStream* bs, uint32_t offset) {
+  DexEncodedArray* res;
+  int check;
+  int i;
+
+  if (bs == NULL) return NULL;
+
+  bsseek(bs,offset);
+
+  DX_ALLOC(DexEncodedArray,res);
+
+  check = l128read(bs,&(res->size));
+
+  res->meta.corrupted = (check || bs->exhausted);
+  if (res->meta.corrupted) return res;
+
+  DX_ALLOC_LIST(DexEncodedValue*,res->values,ul128toui(res->size));
+
+  for (i=0; i<ul128toui(res->size); i++)
+    res->values[i] = dx_encodedvalue(bs,bs->offset);
+
+  return res;  
+}
+
+DexAnnotationElement* dx_annotationelement(ByteStream* bs, uint32_t offset) {
+  DexAnnotationElement* res;
+  int check;
+  int i;
+
+  if (bs == NULL) return NULL;
+
+  bsseek(bs,offset);
+
+  DX_ALLOC(DexAnnotationElement,res);
+
+  check = l128read(bs,&(res->name_idx));
+
+  res->value = dx_encodedvalue(bs,bs->offset);
+
+  res->meta.corrupted = (check || bs->exhausted);
+
+  return res;
+}
+
+DexEncodedAnnotation* dx_encodedannotation(ByteStream* bs, uint32_t offset) {
+  DexEncodedAnnotation* res;
+  int check;
+  int i;
+
+  if (bs == NULL) return NULL;
+
+  bsseek(bs,offset);
+
+  DX_ALLOC(DexEncodedAnnotation,res);
+
+  check  = l128read(bs,&(res->type_idx));
+  check |= l128read(bs,&(res->size));
+
+  res->meta.corrupted = (check || bs->exhausted);
+  if (res->meta.corrupted) return res;
+
+  DX_ALLOC_LIST(DexAnnotationElement*,res->elements,ul128toui(res->size));
+
+  for (i=0; i<ul128toui(res->size); i++)
+    res->elements[i] = dx_annotationelement(bs,bs->offset);
+
+  return res;  
+}
+
 
 uint8_t* dx_debug_state_machine(ByteStream* bs, uint32_t offset) {
   unsigned int size = 1;

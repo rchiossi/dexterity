@@ -34,7 +34,7 @@ def main():
     type_lists += dxp.table('typelist',class_defs,'interfaces_off')
     #class_annotations = dxp.table('annotationsdirectory',classdefs,'annotations_off')
     class_data_list = dxp.table('classdata',class_defs,'class_data_off')
-    #class_statics = dxp.table('encodedarray',class_defs,'static_values_off')
+    class_statics = dxp.table('encodedarray',class_defs,'static_values_off')
 
     #data from class data    
     code_list = []  
@@ -63,10 +63,10 @@ def main():
     for i,opt in enumerate(opts):
         if opt in ['','debug']: continue
 
-        if opt in ['H','X']:
+        if opt in ['H','X','corrupted']:
             args[opt] = True
 
-        elif opt.split(' ')[0] in ['S','T','P','F','M','C','t','s','c','B','D']:
+        elif opt.split(' ')[0] in ['S','T','P','F','M','C','t','s','c','B','D','i']:
             if len(opt.split()) == 1:
                 args[opt] = -1
             elif opt.split(' ')[1].isdigit():
@@ -83,7 +83,27 @@ def main():
         printer.header(header)
 
     elif 'X' in args.keys():
-        printer.maplist(map_list)            
+        printer.maplist(map_list)    
+
+    elif 'corrupted' in args.keys():
+        corrupted  = header.meta.corrupted
+        corrupted |= map_list.meta.corrupted
+
+        for item in string_ids: corrupted |= item.meta.corrupted
+        for item in type_ids: corrupted |= item.meta.corrupted
+        for item in proto_ids: corrupted |= item.meta.corrupted
+        for item in field_ids: corrupted |= item.meta.corrupted
+        for item in method_ids: corrupted |= item.meta.corrupted
+        for item in class_defs: corrupted |= item.meta.corrupted
+
+        for item in string_data_list: corrupted |= item.meta.corrupted
+        for item in type_lists: corrupted |= item.meta.corrupted
+        for item in class_data_list: corrupted |= item.meta.corrupted
+        for item in class_statics: corrupted |= item.meta.corrupted
+        for item in code_list: corrupted |= item.meta.corrupted
+        for item in debug_info_list: corrupted |= item.meta.corrupted
+
+        print "Corrupted: " + str(corrupted)
 
     elif 'S' in args.keys():
         if args.get('S') < 0:
@@ -161,6 +181,13 @@ def main():
                 printer.debuginfo(item)
         else:
             printer.debuginfo(debug_info_list[args.get('B')])
+
+    elif 'i' in args.keys():
+        if args.get('i') < 0:
+            for item in class_statics:
+                printer.encodedarray(item)
+        else:
+            printer.encodedarray(class_statics[args.get('i')])
 
     else:
         print 'Unknown Options.'

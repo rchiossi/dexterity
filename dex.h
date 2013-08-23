@@ -190,7 +190,30 @@ typedef struct _DexMapList {
   DexMapItem** list;
 } DexMapList;
 
+typedef struct _DexEncodedValue {
+  Metadata meta;
+  uint8_t argtype;
+  uint8_t* value;
+} DexEncodedValue;
 
+typedef struct _DexEncodedArray {
+  Metadata meta;
+  leb128_t size;
+  DexEncodedValue** values;  
+} DexEncodedArray;
+
+typedef struct _DexAnnotationElement {
+  Metadata meta;
+  leb128_t name_idx;
+  DexEncodedValue* value;
+} DexAnnotationElement;
+
+typedef struct _DexEncodedAnnotation {
+  Metadata meta;
+  leb128_t type_idx;
+  leb128_t size;
+  DexAnnotationElement** elements;
+} DexEncodedAnnotation;
 
 typedef struct _Dex {
   DexHeaderItem* header;
@@ -222,6 +245,11 @@ DXPARSE(dx_codeitem,DexCodeItem);
 DXPARSE(dx_debuginfo,DexDebugInfo);
 DXPARSE(dx_mapitem,DexMapItem);
 DXPARSE(dx_maplist,DexMapList);
+
+DXPARSE(dx_encodedvalue,DexEncodedValue);
+DXPARSE(dx_encodedarray,DexEncodedArray);
+DXPARSE(dx_annotationelement,DexAnnotationElement);
+DXPARSE(dx_encodedannotation,DexEncodedAnnotation);
 
 uint8_t* dx_debug_state_machine(ByteStream* bs, uint32_t offset);
 

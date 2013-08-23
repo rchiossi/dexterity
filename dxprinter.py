@@ -271,7 +271,7 @@ class DexPrinter (object):
 
         self.meta(obj.meta,pad)
 
-        self.print_attr('size',obj.size.sleb(),pad,size)
+        self.print_attr('size',obj.size.uleb(),pad,size)
 
         self.print_label('list',pad)
         for i in xrange(obj.size.uleb()):
@@ -362,8 +362,91 @@ class DexPrinter (object):
 
         pad += 2
 
+        self.meta(obj.meta,pad)
+
         self.print_attr("size",obj.size,pad,4)
 
+        self.print_label('list',pad)
         for i in xrange(obj.size):
-            self.mapitem(obj.list[i].contents,pad)
+            self.mapitem(obj.list[i].contents,pad+2)
 
+    def encodedvalue(self,obj,pad=0):
+        self.print_label("EncodedValue",pad)
+
+        pad += 2
+
+        self.meta(obj.meta,pad)
+
+        size = self.max_attr(obj)
+
+        obj_type = (obj.argtype & 0x1f)        
+        obj_arg = ((obj.argtype >> 5) & 0x7)
+        
+        self.print_attr('argtype',hex(obj.argtype),pad,size)
+
+        self.print_attr('type',hex(obj_type),pad,size)
+        self.print_attr('arg',obj_arg,pad,size)
+
+        if obj_type == 0x0:
+            self.print_attr('value',int(obj.value.contents),pad,size)
+        elif obj_type in [0x2,0x3,0x4,0x6,0x10,0x11,0x17,0x18,0x19,0x1a,0x1b]:
+            self.print_label('value',pad)
+            data = ' '*(pad+2)
+            for i in xrange(obj_arg+1):
+                data += "%02x" % obj.value[i]
+            print data
+        elif obj_type == 0x1c:
+            self.print_label('value',pad)
+            self.encodedarray(obj.value.contents,pad+2)
+        elif obj_type == 0x1d:
+            self.print_label('value',pad)
+            self.encodedannotation(obj.value.contents,pad+2)
+        elif obj_type in [0x1e,0x1f]:
+            self.print_label('value',pad)
+        else:
+            self.print_label('value',pad)
+            print ' '*(pad+2) + 'Unknown'
+        
+    def encodedarray(self,obj,pad=0):
+        self.print_label("EncodedArray",pad)
+
+        pad += 2
+
+        self.meta(obj.meta,pad)
+
+        size = self.max_attr(obj)
+
+        self.print_attr('size',obj.size.uleb(),pad,size)
+
+        self.print_label('values',pad)
+        for i in xrange(obj.size.uleb()):
+            self.encodedvalue(obj.values[i].contents,pad+2)
+        
+    def annotationelement(self,obj,pad=0):
+        self.print_label("AnnotationElement",pad)
+
+        pad += 2
+
+        self.meta(obj.meta,pad)
+
+        size = self.max_attr(obj)
+
+        self.print_attr('name_idx',obj.name_idx.uleb(),pad,size)
+        self.print_label('value')
+        self.encodedvalue(obj.value.contents,pad+2)
+
+    def encodedannotation(self,obj,pad=0):
+        self.print_label("EncodedAnnotation",pad)
+
+        pad += 2
+
+        self.meta(obj.meta,pad)
+
+        size = self.max_attr(obj)
+
+        self.print_attr('type_idx',obj.type_idx.uleb(),pad,size)
+        self.print_attr('size',obj.size.uleb(),pad,size)
+
+        self.print_label('elements',pad)
+        for i in xrange(obj.size.uleb()):
+            self.annotationelement(obj.elements[i].contents,pad+2)
