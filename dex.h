@@ -215,6 +215,69 @@ typedef struct _DexEncodedAnnotation {
   DexAnnotationElement** elements;
 } DexEncodedAnnotation;
 
+typedef struct _DexFieldAnnotation {
+  Metadata meta;
+  uint32_t field_idx;
+  uint32_t annotations_off;
+} DexFieldAnnotation;
+
+typedef struct _DexMethodAnnotation {
+  Metadata meta;
+  uint32_t method_idx;
+  uint32_t annotations_off;
+} DexMethodAnnotation;
+
+typedef struct _DexParameterAnnotation {
+  Metadata meta;
+  uint32_t method_idx;
+  uint32_t annotations_off;
+} DexParameterAnnotation;
+
+typedef struct _DexAnnotationDirectoryItem {
+  Metadata meta;
+  uint32_t class_annotations_off;
+  uint32_t fields_size;
+  uint32_t annotated_methods_size;
+  uint32_t annotated_parameters_size;
+  DexFieldAnnotation** field_annotations;
+  DexMethodAnnotation** method_annotations;
+  DexParameterAnnotation** parameter_annotations;  
+} DexAnnotationDirectoryItem;
+
+typedef struct _DexAnnotationSetRefItem {
+  Metadata meta;
+  uint32_t annotations_off;
+} DexAnnotationSetRefItem;
+
+typedef struct _DexAnnotationSetRefList {
+  Metadata meta;
+  uint32_t size;
+  DexAnnotationSetRefItem** list;
+} DexAnnotationSetRefList;
+
+typedef struct _DexAnnotationOffItem {
+  Metadata meta;
+  uint32_t annotation_off;
+} DexAnnotationOffItem;
+
+typedef struct _DexAnnotationSetItem {
+  Metadata meta;
+  uint32_t size;
+  DexAnnotationOffItem** entries;
+} DexAnnotationSetItem;
+
+typedef struct _DexAnnotationItem {
+  Metadata meta;
+  uint8_t visibility;
+  DexEncodedAnnotation* annotation;
+} DexAnnotationItem;
+
+typedef struct _DexEncodedArrayItem {
+  Metadata meta;
+  DexEncodedArray* value;
+} DexEncodedArrayItem;
+
+//TODO
 typedef struct _Dex {
   DexHeaderItem* header;
   DexStringIdItem** string_ids;
@@ -252,6 +315,17 @@ DXPARSE(dx_annotationelement,DexAnnotationElement);
 DXPARSE(dx_encodedannotation,DexEncodedAnnotation);
 
 uint8_t* dx_debug_state_machine(ByteStream* bs, uint32_t offset);
+
+DXPARSE(dx_fieldannotation,DexFieldAnnotation);
+DXPARSE(dx_methodannotation,DexMethodAnnotation);
+DXPARSE(dx_parameterannotation,DexParameterAnnotation);
+DXPARSE(dx_annotationdirectoryitem,DexAnnotationDirectoryItem);
+DXPARSE(dx_annotationsetrefitem,DexAnnotationSetRefItem);
+DXPARSE(dx_annotationsetreflist,DexAnnotationSetRefList);
+DXPARSE(dx_annotationoffitem,DexAnnotationOffItem);
+DXPARSE(dx_annotationsetitem,DexAnnotationSetItem);
+DXPARSE(dx_annotationitem,DexAnnotationItem);
+DXPARSE(dx_encodedarrayitem,DexEncodedArrayItem);
 
 //Build
 #define DXBUILD(_name,_type) void _name (ByteStream* bs, _type* obj)

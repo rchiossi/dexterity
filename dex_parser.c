@@ -543,3 +543,133 @@ uint8_t* dx_debug_state_machine(ByteStream* bs, uint32_t offset) {
 
   return res;    
 }
+
+DXP_FIXED(dx_fieldannotation,DexFieldAnnotation);
+DXP_FIXED(dx_methodannotation,DexMethodAnnotation);
+DXP_FIXED(dx_parameterannotation,DexParameterAnnotation);
+
+DexAnnotationDirectoryItem* dx_annotationdirectoryitem(ByteStream* bs, uint32_t offset) {
+  DexAnnotationDirectoryItem* res;
+  int check;
+  int i;
+
+  if (bs == NULL) return NULL;
+
+  DX_ALLOC(DexAnnotationDirectoryItem,res);
+
+  bsseek(bs,offset);
+
+  check  = bsread(bs,(uint8_t*) &(res->class_annotations_off),sizeof(uint32_t));
+  check += bsread(bs,(uint8_t*) &(res->fields_size),sizeof(uint32_t));
+  check += bsread(bs,(uint8_t*) &(res->annotated_methods_size),sizeof(uint32_t));
+  check += bsread(bs,(uint8_t*) &(res->annotated_parameters_size),sizeof(uint32_t));
+
+  res->meta.corrupted = (check != sizeof(uint32_t)*4 || bs->exhausted);
+  if (res->meta.corrupted) return res;
+
+  DX_ALLOC_LIST(DexFieldAnnotation*,res->field_annotations,
+		res->fields_size);
+  DX_ALLOC_LIST(DexMethodAnnotation*,res->method_annotations,
+		res->annotated_methods_size);
+  DX_ALLOC_LIST(DexParameterAnnotation*,res->parameter_annotations,
+		res->annotated_parameters_size);
+
+  for (i=0; i<res->fields_size; i++)
+    res->field_annotations[i] = dx_fieldannotation(bs,bs->offset);
+
+  for (i=0; i<res->annotated_methods_size; i++)
+    res->method_annotations[i] = dx_methodannotation(bs,bs->offset);
+  
+  for (i=0; i<res->annotated_parameters_size; i++)
+    res->parameter_annotations[i] = dx_parameterannotation(bs,bs->offset);
+
+  return res;
+}
+
+DXP_FIXED(dx_annotationsetrefitem,DexAnnotationSetRefItem);
+
+DexAnnotationSetRefList* dx_annotationsetreflist(ByteStream* bs, uint32_t offset) {
+  DexAnnotationSetRefList* res;
+  int check;
+  int i;
+
+  if (bs == NULL) return NULL;
+
+  DX_ALLOC(DexAnnotationSetRefList,res);
+
+  bsseek(bs,offset);
+
+  check  = bsread(bs,(uint8_t*) &(res->size),sizeof(uint32_t));
+
+  res->meta.corrupted = (check != sizeof(uint32_t) || bs->exhausted);
+  if (res->meta.corrupted) return res;
+
+  DX_ALLOC_LIST(DexAnnotationSetRefItem*,res->list,res->size);
+
+  for (i=0; i<res->size; i++)
+    res->list[i] = dx_annotationsetrefitem(bs,bs->offset);
+
+  return res;
+}
+
+DXP_FIXED(dx_annotationoffitem,DexAnnotationOffItem);
+
+DexAnnotationSetItem* dx_annotationsetitem(ByteStream* bs, uint32_t offset) {
+  DexAnnotationSetItem* res;
+  int check;
+  int i;
+
+  if (bs == NULL) return NULL;
+
+  DX_ALLOC(DexAnnotationSetItem,res);
+
+  bsseek(bs,offset);
+
+  check  = bsread(bs,(uint8_t*) &(res->size),sizeof(uint32_t));
+
+  res->meta.corrupted = (check != sizeof(uint32_t) || bs->exhausted);
+  if (res->meta.corrupted) return res;
+
+  DX_ALLOC_LIST(DexAnnotationOffItem*,res->entries,res->size);
+
+  for (i=0; i<res->size; i++)
+    res->entries[i] = dx_annotationoffitem(bs,bs->offset);
+
+  return res;
+}
+
+DexAnnotationItem* dx_annotationitem(ByteStream* bs, uint32_t offset) {
+  DexAnnotationItem* res;
+  int check;
+
+  if (bs == NULL) return NULL;
+
+  DX_ALLOC(DexAnnotationItem,res);
+
+  bsseek(bs,offset);
+
+  check  = bsread(bs,(uint8_t*) &(res->visibility),sizeof(uint8_t));
+
+  res->annotation = dx_encodedannotation(bs,bs->offset);
+
+  res->meta.corrupted = (check != sizeof(uint8_t) || bs->exhausted);
+  
+  return res;
+}
+
+DexEncodedArrayItem* dx_encodedarrayitem(ByteStream* bs, uint32_t offset) {
+  DexEncodedArrayItem* res;
+  int check;
+
+  if (bs == NULL) return NULL;
+
+  DX_ALLOC(DexEncodedArrayItem,res);
+
+  bsseek(bs,offset);
+
+  res->value = dx_encodedarray(bs,bs->offset);
+
+  res->meta.corrupted = bs->exhausted;
+  
+  return res;
+}

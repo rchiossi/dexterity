@@ -450,3 +450,145 @@ class DexPrinter (object):
         self.print_label('elements',pad)
         for i in xrange(obj.size.uleb()):
             self.annotationelement(obj.elements[i].contents,pad+2)
+
+    def fieldannotation(self,obj,pad=0):
+        self.print_label("FieldAnnotation",pad)
+
+        pad += 2
+
+        self.meta(obj.meta,pad)
+
+        size = self.max_attr(obj)
+
+        self.print_attr('field_idx',obj.field_idx,pad,size)
+        self.print_attr('annotations_off',hex(obj.annotations_off),pad,size)
+
+    def methodannotation(self,obj,pad=0):
+        self.print_label("MethodAnnotation",pad)
+
+        pad += 2
+
+        self.meta(obj.meta,pad)
+
+        size = self.max_attr(obj)
+
+        self.print_attr('method_idx',obj.method_idx,pad,size)
+        self.print_attr('annotations_off',hex(obj.annotations_off),pad,size)
+
+    def parameterannotation(self,obj,pad=0):
+        self.print_label("ParameterAnnotation",pad)
+
+        pad += 2
+
+        self.meta(obj.meta,pad)
+
+        size = self.max_attr(obj)
+
+        self.print_attr('method_idx',obj.method_idx,pad,size)
+        self.print_attr('annotations_off',hex(obj.annotations_off),pad,size)
+
+    def annotationdirectoryitem(self,obj,pad=0):
+        self.print_label("AnnotationDirectoryItem",pad)
+
+        pad += 2
+
+        self.meta(obj.meta,pad)
+
+        size = self.max_attr(obj)
+
+        self.print_attr('class_annotations_off',hex(obj.class_annotations_off),
+                        pad,size)
+        self.print_attr('fields_size',obj.fields_size,pad,size)
+        self.print_attr('annotated_methods_size',obj.annotated_methods_size,pad,size)
+        self.print_attr('annotated_parameters_size',obj.annotated_parameters_size,
+                        pad,size)
+
+        self.print_label('field_annotations',pad)
+        for i in xrange(obj.fields_size):
+            self.fieldannotation(obj.field_annotations[i].contents,pad+2)
+
+        self.print_label('method_annotations',pad)
+        for i in xrange(obj.annotated_methods_size):
+            self.methodannotation(obj.method_annotations[i].contents,pad+2)
+
+        self.print_label('parameter_annotations',pad)
+        for i in xrange(obj.annotated_parameters_size):
+            self.parameterannotation(obj.parameter_annotations[i].contents,pad+2)
+
+    def annotationsetrefitem(self,obj,pad=0):
+        self.print_label("AnnotationSetRefItem",pad)
+
+        pad += 2
+
+        self.meta(obj.meta,pad)
+
+        size = self.max_attr(obj)
+
+        self.print_attr('annotations_off',hex(obj.annotations_off),pad,size)
+        
+    def annotationsetreflist(self,obj,pad=0):
+        self.print_label("AnnotationSetRefList",pad)
+
+        pad += 2
+
+        self.meta(obj.meta,pad)
+
+        size = self.max_attr(obj)
+
+        self.print_attr('size',hex(obj.size),pad,size)
+
+        self.print_label('list',pad)
+        for i in xrange(obj.size):
+            self.annotationsetrefitem(obj.list[i].contents,pad+2)
+
+    def annotationoffitem(self,obj,pad=0):
+        self.print_label("AnnotationOffItem",pad)
+
+        pad += 2
+
+        self.meta(obj.meta,pad)
+
+        size = self.max_attr(obj)
+
+        self.print_attr('annotation_off',hex(obj.annotation_off),pad,size)
+
+    def annotationsetitem(self,obj,pad=0):
+        self.print_label("AnnotationSetItem",pad)
+
+        pad += 2
+
+        self.meta(obj.meta,pad)
+
+        size = self.max_attr(obj)
+
+        self.print_attr('size',hex(obj.size),pad,size)
+
+        self.print_label('entries',pad)
+        for i in xrange(obj.size):
+            self.annotationoffitem(obj.entries[i].contents,pad+2)
+
+    def annotationitem(self,obj,pad=0):
+        self.print_label("AnnotationItem",pad)
+
+        pad += 2
+
+        self.meta(obj.meta,pad)
+
+        size = self.max_attr(obj)
+
+        self.print_attr('visibility',hex(obj.visibility),pad,size)
+
+        self.print_label('annotation',pad)
+        self.encodedannotation(obj.annotation.contents,pad+2)
+
+    def encodedarrayitem(self,obj,pad=0):
+        self.print_label("AnnotationItem",pad)
+
+        pad += 2
+
+        self.meta(obj.meta,pad)
+
+        size = self.max_attr(obj)
+
+        self.print_label('value',pad)
+        self.encodedarray(obj.value.contents,pad+2)

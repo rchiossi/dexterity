@@ -32,7 +32,7 @@ def main():
 
     #data from class def
     type_lists += dxp.table('typelist',class_defs,'interfaces_off')
-    #class_annotations = dxp.table('annotationsdirectory',classdefs,'annotations_off')
+    class_annotations = dxp.table('annotationdirectoryitem',class_defs,'annotations_off')
     class_data_list = dxp.table('classdata',class_defs,'class_data_off')
     class_statics = dxp.table('encodedarray',class_defs,'static_values_off')
 
@@ -55,6 +55,35 @@ def main():
     #data from code item
     debug_info_list = dxp.table('debuginfo',code_list,'debug_info_off')
 
+    #data from class annotations    
+    annotation_sets = dxp.table('annotationsetitem',class_annotations,
+                               'class_annotations_off')
+
+    annotation_set_ref_lists = []
+
+    for item in class_annotations:
+        if item.meta.corrupted == True: continue
+
+        for i in xrange(item.fields_size):            
+            off = item.field_annotations[i].contents.annotations_off
+            annotation_sets.append(dxp.item('annotationsetitem',off))
+
+        for i in xrange(item.annotated_methods_size):            
+            off = item.method_annotations[i].contents.annotations_off
+            annotation_sets.append(dxp.item('annotationsetitem',off))
+
+        for i in xrange(item.annotated_parameters_size):            
+            off = item.parameter_annotations[i].contents.annotations_off
+            annotation_set_ref_lists.append(dxp.item('annotationsetreflist',off))
+            
+    #data from annotation set ref lists
+    for item in annotation_set_ref_lists:
+        if item.meta.corrupted == True: continue
+
+        for i in xrange(item.size):            
+            off = item.list[i].contents.annotations_off
+            annotation_sets.append(dxp.item('annotationsetitem',off)) 
+
     opts = ''.join(sys.argv[1:-1]).split('-')
     args = {}
 
@@ -66,7 +95,8 @@ def main():
         if opt in ['H','X','corrupted']:
             args[opt] = True
 
-        elif opt.split(' ')[0] in ['S','T','P','F','M','C','t','s','c','B','D','i']:
+        elif opt.split(' ')[0] in ['S','T','P','F','M','C','t','s',
+                                   'c','B','D','i','a','f','r']:
             if len(opt.split()) == 1:
                 args[opt] = -1
             elif opt.split(' ')[1].isdigit():
@@ -98,6 +128,7 @@ def main():
 
         for item in string_data_list: corrupted |= item.meta.corrupted
         for item in type_lists: corrupted |= item.meta.corrupted
+        for item in class_annotations: corrupted |= item.meta.corrupted
         for item in class_data_list: corrupted |= item.meta.corrupted
         for item in class_statics: corrupted |= item.meta.corrupted
         for item in code_list: corrupted |= item.meta.corrupted
@@ -188,6 +219,28 @@ def main():
                 printer.encodedarray(item)
         else:
             printer.encodedarray(class_statics[args.get('i')])
+
+    elif 'a' in args.keys():
+        if args.get('a') < 0:
+            for item in class_annotations:
+                printer.annotationdirectoryitem(item)
+        else:
+            printer.annotationdirectoryitem(class_annotations[args.get('i')])
+
+    elif 'f' in args.keys():
+        if args.get('f') < 0:
+            for item in annotation_set_ref_lists:
+                printer.annotationsetreflist(item)
+        else:
+            printer.annotationsetreflist(annotation_set_ref_lists[args.get('i')])
+
+    elif 'r' in args.keys():
+        if args.get('r') < 0:
+            for item in annotation_sets:
+                printer.annotationsetitem(item)
+        else:
+            printer.annotationsetitem(annotation_sets[args.get('i')])
+
 
     else:
         print 'Unknown Options.'

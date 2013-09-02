@@ -299,6 +299,78 @@ class DexEncodedAnnotation(Structure):
         ('size', Leb128),
         ('elements', POINTER(POINTER(DexAnnotationElement))),
         ]
+# --
+class DexFieldAnnotation(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('field_idx', c_uint32),
+        ('annotations_off', c_uint32),
+        ]
+
+class DexMethodAnnotation(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('method_idx', c_uint32),
+        ('annotations_off', c_uint32),
+        ]
+
+class DexParameterAnnotation(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('method_idx', c_uint32),
+        ('annotations_off', c_uint32),
+        ]
+
+class DexAnnotationDirectoryItem(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('class_annotations_off', c_uint32),
+        ('fields_size', c_uint32),
+        ('annotated_methods_size', c_uint32),
+        ('annotated_parameters_size', c_uint32),
+        ('field_annotations', POINTER(POINTER(DexFieldAnnotation))),
+        ('method_annotations', POINTER(POINTER(DexMethodAnnotation))),
+        ('parameter_annotations', POINTER(POINTER(DexParameterAnnotation))),
+        ]
+
+class DexAnnotationSetRefItem(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('annotations_off', c_uint32),
+        ]
+
+class DexAnnotationSetRefList(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('size', c_uint32),
+        ('list', POINTER(POINTER(DexAnnotationSetRefItem))),
+        ]
+
+class DexAnnotationOffItem(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('annotation_off', c_uint32),
+        ]
+
+class DexAnnotationSetItem(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('size', c_uint32),
+        ('entries', POINTER(POINTER(DexAnnotationOffItem))),
+        ]
+
+class DexAnnotationItem(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('visibility', c_uint8),
+        ('annotation', POINTER(DexEncodedAnnotation)),
+        ]
+
+class DexEncodedArrayItem(Structure):
+    _fields_ = [
+        ('meta', Metadata),
+        ('value', POINTER(DexEncodedArray)),
+        ]
 
 #Load Library
 dxlib = cdll.LoadLibrary("./dexterity.so")
@@ -368,6 +440,17 @@ DXPARSE('dx_encodedannotation',DexEncodedAnnotation);
 
 dxlib.dx_debug_state_machine.argtypes = (POINTER(_ByteStream),c_uint32)
 dxlib.dx_debug_state_machine.restype = POINTER(c_uint8)
+
+DXPARSE('dx_fieldannotation',DexFieldAnnotation);
+DXPARSE('dx_methodannotation',DexMethodAnnotation);
+DXPARSE('dx_parameterannotation',DexParameterAnnotation);
+DXPARSE('dx_annotationdirectoryitem',DexAnnotationDirectoryItem);
+DXPARSE('dx_annotationsetrefitem',DexAnnotationSetRefItem);
+DXPARSE('dx_annotationsetreflist',DexAnnotationSetRefList);
+DXPARSE('dx_annotationoffitem',DexAnnotationOffItem);
+DXPARSE('dx_annotationsetitem',DexAnnotationSetItem);
+DXPARSE('dx_annotationitem',DexAnnotationItem);
+DXPARSE('dx_encodedarrayitem',DexEncodedArrayItem);
 
 #DexParser
 class DexParser(object):
