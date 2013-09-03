@@ -3,6 +3,9 @@
 import sys
 
 from dex import DexParser
+from dex import ByteStream
+from dex import dxlib
+
 from dxprinter import DexPrinter
 
 def main():    
@@ -84,6 +87,16 @@ def main():
             off = item.list[i].contents.annotations_off
             annotation_sets.append(dxp.item('annotationsetitem',off)) 
 
+    #data from annotation set item
+    annotations = []
+            
+    for item in annotation_sets:
+        if item.meta.corrupted == True: continue
+
+        for i in xrange(item.size):
+            off = item.entries[i].contents.annotation_off
+            annotations.append(dxp.item('annotationitem',off))
+
     opts = ''.join(sys.argv[1:-1]).split('-')
     args = {}
 
@@ -92,11 +105,11 @@ def main():
     for i,opt in enumerate(opts):
         if opt in ['','debug']: continue
 
-        if opt in ['H','X','corrupted']:
+        if opt in ['H','X','corrupted','rebuild']:
             args[opt] = True
 
         elif opt.split(' ')[0] in ['S','T','P','F','M','C','t','s',
-                                   'c','B','D','i','a','f','r']:
+                                   'c','B','D','i','a','f','r','n']:
             if len(opt.split()) == 1:
                 args[opt] = -1
             elif opt.split(' ')[1].isdigit():
@@ -134,7 +147,38 @@ def main():
         for item in code_list: corrupted |= item.meta.corrupted
         for item in debug_info_list: corrupted |= item.meta.corrupted
 
+        for item in annotation_sets: corrupted |= item.meta.corrupted
+        for item in annotation_set_ref_lists: corrupted |= item.meta.corrupted
+
+        for item in annotations: corrupted |= item.meta.corrupted
+
         print "Corrupted: " + str(corrupted)
+
+    elif 'rebuild' in args.keys():
+        bs = ByteStream(size=dxp.bs._bs.contents.size)
+
+        dxlib.dxb_header(bs._bs,header)
+        dxlib.dxb_maplist(bs._bs,map_list)
+
+        for item in string_ids: dxlib.dxb_stringid(bs._bs,item)
+        for item in type_ids: dxlib.dxb_typeid(bs._bs,item)
+        for item in proto_ids: dxlib.dxb_protoid(bs._bs,item)
+        for item in field_ids: dxlib.dxb_fieldid(bs._bs,item)
+        for item in method_ids: dxlib.dxb_methodid(bs._bs,item)
+        for item in class_defs: dxlib.dxb_classdef(bs._bs,item)
+
+        for item in string_data_list: dxlib.dxb_stringdata(bs._bs,item)
+        for item in type_lists: dxlib.dxb_typelist(bs._bs,item)
+        for item in class_annotations: dxlib.dxb_annotationdirectoryitem(bs._bs,item)
+        for item in class_data_list: dxlib.dxb_classdata(bs._bs,item)
+        for item in class_statics: dxlib.dxb_encodedarray(bs._bs,item)
+        for item in code_list: dxlib.dxb_codeitem(bs._bs,item)
+        for item in debug_info_list: dxlib.dxb_debuginfo(bs._bs,item)
+
+        for item in annotation_sets: dxlib.dxb_annotationsetitem(bs._bs,item)
+        for item in annotation_set_ref_lists: dxlib.dxb_annotationsetreflist(bs._bs,item)
+        for item in annotations: dxlib.dxb_annotationitem(bs._bs,item)
+        bs.save("rebuild.dex")
 
     elif 'S' in args.keys():
         if args.get('S') < 0:
@@ -241,6 +285,13 @@ def main():
         else:
             printer.annotationsetitem(annotation_sets[args.get('i')])
 
+
+    elif 'n' in args.keys():
+        if args.get('n') < 0:
+            for item in annotations:
+                printer.annotationitem(item)
+        else:
+            printer.annotationitem(annotations[args.get('i')])
 
     else:
         print 'Unknown Options.'

@@ -50,6 +50,9 @@ class ByteStream(object):
     def reset(self):
         dxlib.bsreset(self._bs)
 
+    def save(self,filename):
+        dxlib.bssave(self._bs,filename)
+
     def exhausted(self):
         return (self._bs.contents.exhausted != 0)
 
@@ -451,6 +454,52 @@ DXPARSE('dx_annotationoffitem',DexAnnotationOffItem);
 DXPARSE('dx_annotationsetitem',DexAnnotationSetItem);
 DXPARSE('dx_annotationitem',DexAnnotationItem);
 DXPARSE('dx_encodedarrayitem',DexEncodedArrayItem);
+
+def DXBUILD(name,obj):
+    global dxlib
+    getattr(dxlib,name).argtypes = (POINTER(_ByteStream),POINTER(obj))
+    getattr(dxlib,name).restype  = None 
+
+DXBUILD('dxb_header',DexHeaderItem);
+DXBUILD('dxb_stringid',DexStringIdItem);
+DXBUILD('dxb_typeid',DexTypeIdItem);
+DXBUILD('dxb_protoid',DexProtoIdItem);
+DXBUILD('dxb_fieldid',DexFieldIdItem);
+DXBUILD('dxb_methodid',DexMethodIdItem);
+DXBUILD('dxb_classdef',DexClassDefItem);
+DXBUILD('dxb_stringdata',DexStringDataItem);
+DXBUILD('dxb_encodedfield',DexEncodedFieldItem);
+DXBUILD('dxb_encodedmethod',DexEncodedMethodItem);
+DXBUILD('dxb_classdata',DexClassDataItem);
+DXBUILD('dxb_typeitem',DexTypeItem);
+DXBUILD('dxb_typelist',DexTypeList);
+DXBUILD('dxb_tryitem',DexTryItem);
+DXBUILD('dxb_encodedtypeaddrpair',DexEncodedTypeAddrPair);
+DXBUILD('dxb_encodedcatchhandler',DexEncodedCatchHandler);
+DXBUILD('dxb_encodedcatchhandlerlist',DexEncodedCatchHandlerList);
+DXBUILD('dxb_codeitem',DexCodeItem);
+DXBUILD('dxb_debuginfo',DexDebugInfo);
+DXBUILD('dxb_mapitem',DexMapItem);
+DXBUILD('dxb_maplist',DexMapList);
+
+DXBUILD('dxb_encodedvalue',DexEncodedValue);
+DXBUILD('dxb_encodedarray',DexEncodedArray);
+DXBUILD('dxb_annotationelement',DexAnnotationElement);
+DXBUILD('dxb_encodedannotation',DexEncodedAnnotation);
+
+dxlib.dxb_debug_state_machine.argtypes = (POINTER(_ByteStream),POINTER(c_uint8))
+dxlib.dxb_debug_state_machine.restype = None
+
+DXBUILD('dxb_fieldannotation',DexFieldAnnotation);
+DXBUILD('dxb_methodannotation',DexMethodAnnotation);
+DXBUILD('dxb_parameterannotation',DexParameterAnnotation);
+DXBUILD('dxb_annotationdirectoryitem',DexAnnotationDirectoryItem);
+DXBUILD('dxb_annotationsetrefitem',DexAnnotationSetRefItem);
+DXBUILD('dxb_annotationsetreflist',DexAnnotationSetRefList);
+DXBUILD('dxb_annotationoffitem',DexAnnotationOffItem);
+DXBUILD('dxb_annotationsetitem',DexAnnotationSetItem);
+DXBUILD('dxb_annotationitem',DexAnnotationItem);
+DXBUILD('dxb_encodedarrayitem',DexEncodedArrayItem);
 
 #DexParser
 class DexParser(object):

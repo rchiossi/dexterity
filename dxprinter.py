@@ -1,3 +1,8 @@
+from dex import DexEncodedArray
+from dex import DexEncodedAnnotation
+from ctypes import cast
+from ctypes import POINTER
+
 class DexPrinter (object):
     def __init__(self,meta_verbose=False):
         self.meta_verbose = meta_verbose
@@ -352,10 +357,37 @@ class DexPrinter (object):
         
         size = self.max_attr(obj)
 
-        self.print_attr('type',hex(obj.type),pad,size)
+        type_map = {
+            0x0000:"header_item",
+            0x0001:"string_id_item",
+            0x0002:"type_id_item",
+            0x0003:"proto_id_item",
+            0x0004:"field_id_item",
+            0x0005:"method_id_item",
+            0x0006:"class_def_item",
+            0x1000:"map_list",
+            0x1001:"type_list",
+            0x1002:"annotation_set_ref_list",
+            0x1003:"annotation_set_item",
+            0x2000:"class_data_item",
+            0x2001:"code_item",
+            0x2002:"string_data_item",
+            0x2003:"debug_info_item",
+            0x2004:"annotation_item",
+            0x2005:"encoded_array_item",
+            0x2006:"annotations_directory_item",
+            }
+                
+        if obj.type not in type_map.keys():
+            label = 'UNKNOWN'
+        else:
+            label = type_map.get(obj.type)
+
+        self.print_attr('type','%s (%s)' % (hex(obj.type),label),pad,size)
+
         self.print_attr('unused',obj.unused,pad,size)
         self.print_attr('size',obj.size,pad,size)
-        self.print_attr('offset',obj.offset,pad,size)
+        self.print_attr('offset',hex(obj.offset),pad,size)
         
     def maplist(self,obj,pad=0):
         self.print_label("MapList",pad)
@@ -397,10 +429,12 @@ class DexPrinter (object):
             print data
         elif obj_type == 0x1c:
             self.print_label('value',pad)
-            self.encodedarray(obj.value.contents,pad+2)
+            self.encodedarray(cast(obj.value,POINTER(DexEncodedArray)).contents,pad+2)
         elif obj_type == 0x1d:
             self.print_label('value',pad)
-            self.encodedannotation(obj.value.contents,pad+2)
+            self.print_label(obj.value.contents._type_,pad)            
+            self.encodedannotation(cast(obj.value,
+                                        POINTER(DexEncodedAnnotation).contents),pad+2)
         elif obj_type in [0x1e,0x1f]:
             self.print_label('value',pad)
         else:
@@ -432,7 +466,7 @@ class DexPrinter (object):
         size = self.max_attr(obj)
 
         self.print_attr('name_idx',obj.name_idx.uleb(),pad,size)
-        self.print_label('value')
+        self.print_label('value',pad)
         self.encodedvalue(obj.value.contents,pad+2)
 
     def encodedannotation(self,obj,pad=0):
