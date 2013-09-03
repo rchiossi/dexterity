@@ -370,9 +370,4 @@ DXBUILD(dxb_annotationsetitem,DexAnnotationSetItem);
 DXBUILD(dxb_annotationitem,DexAnnotationItem);
 DXBUILD(dxb_encodedarrayitem,DexEncodedArrayItem);
 
-//General
-#define dxdex(_bs) dxdex_off(_bs,(uint32_t) 0x0)
-Dex* dxdex_off(ByteStream* bs, uint32_t offset);
-void dxfree(Dex* dex);
-
 #endif
