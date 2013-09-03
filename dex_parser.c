@@ -71,6 +71,8 @@ DXP_FIXED(dx_classdef,DexClassDefItem)
 DexStringDataItem* dx_stringdata(ByteStream* bs, uint32_t offset) {
   DexStringDataItem* res;
   int check;
+  uint8_t byte;
+  uint8_t* tape;
 
   if (bs == NULL) return NULL;
 
@@ -85,13 +87,29 @@ DexStringDataItem* dx_stringdata(ByteStream* bs, uint32_t offset) {
     return res;
   }
 
-  res->data = (uint8_t*) malloc(sizeof(uint8_t)*ul128toui(res->size));
+  DX_ALLOC_LIST(uint8_t,res->data,ul128toui(res->size)*3+1);
 
-  if (res->data == NULL) alloc_fail();
+  tape = (uint8_t*) res->data;
 
-  check = bsread(bs,res->data,ul128toui(res->size));
+  bsread(bs,tape,sizeof(uint8_t));
+  
+  while(*tape) {
+    if ((*tape & 0xe0) == 0xc0 ) {
+      tape++;
+      bsread(bs,tape,sizeof(uint8_t));
+    }
 
-  res->meta.corrupted = check != ul128toui(res->size);
+    else if ((byte & 0xf0) == 0xe0) {
+      tape++;
+      bsread(bs,tape,sizeof(uint8_t)*2);      
+      tape++;
+    }
+        
+    tape++;
+    bsread(bs,tape,sizeof(uint8_t));
+  }
+  
+  res->meta.corrupted |= bs->exhausted;
 
   return res;
 }

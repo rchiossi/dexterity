@@ -117,7 +117,7 @@ class DexStringDataItem(Structure):
     _fields_ = [
         ('meta', Metadata),
         ('size', Leb128),
-        ('data', c_char_p),
+        ('data', POINTER(c_uint8)),
         ]
 
 class DexTypeIdItem(Structure):
@@ -398,6 +398,9 @@ dxlib.bsseek.restype = None
 
 dxlib.bsreset.argtypes = (POINTER(_ByteStream),)
 dxlib.bsreset.restype = None
+
+dxlib.bssave.argtypes = (POINTER(_ByteStream),c_char_p)
+dxlib.bssave.restype = None
 
 # Leb128 Prototypes
 dxlib.ul128toui.argtypes = (Leb128,)

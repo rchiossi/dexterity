@@ -31,12 +31,37 @@ DXB_FIXED(dxb_methodid,DexMethodIdItem)
 DXB_FIXED(dxb_classdef,DexClassDefItem)
 
 void dxb_stringdata(ByteStream* bs, DexStringDataItem* obj) {
+  uint8_t* tape;
+  char end[] = "\x00";
+
   if (bs == NULL || obj == NULL) return;
 
   bsseek(bs,obj->meta.offset);
 
   l128write(bs,&(obj->size));
-  bswrite(bs,obj->data,ul128toui(obj->size));
+
+  tape = (uint8_t*) obj->data;
+
+  if (ul128toui(obj->size) != 0x0) {
+    while(*tape) {
+      bswrite(bs,tape,sizeof(uint8_t));
+
+      if ((*tape & 0xe0) == 0xc0 ) {
+	tape += 1;
+	bswrite(bs,tape,sizeof(uint8_t));
+      }
+
+      else if ((*tape & 0xf0) == 0xe0) {
+	tape += 1;
+	bswrite(bs,tape,sizeof(uint8_t)*2);
+	tape += 1;
+      }
+
+      tape++;
+    }
+  }
+
+  bswrite(bs,end,sizeof(uint8_t));
 }
 
 void dxb_encodedfield(ByteStream* bs, DexEncodedFieldItem* obj) {

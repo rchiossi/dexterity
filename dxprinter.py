@@ -1,7 +1,7 @@
 from dex import DexEncodedArray
 from dex import DexEncodedAnnotation
 from ctypes import cast
-from ctypes import POINTER
+from ctypes import POINTER, c_char_p
 
 class DexPrinter (object):
     def __init__(self,meta_verbose=False):
@@ -84,7 +84,8 @@ class DexPrinter (object):
         self.meta(obj.meta,pad)
 
         self.print_attr('size',obj.size.uleb(),pad,size)
-        self.print_attr('data',str(obj.data)[:obj.size.uleb()],pad,size)
+        self.print_attr('data',str(cast(obj.data,c_char_p).value)[:obj.size.uleb()],
+                        pad,size)
 
     def typeid(self,obj,pad=0):
         self.print_label("TypeId",pad)
