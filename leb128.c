@@ -4,9 +4,13 @@
 #include "leb128.h"
 
 unsigned int l128size(ByteStream* bs) {
-  int32_t offset = bs->offset;
+  int32_t offset;
   unsigned int len = 0;
   uint8_t cbyte = 0x0;
+
+  if (bs == NULL) return 0;
+
+  offset = bs->offset;
 
   bsread(bs,&cbyte,1);
 
@@ -24,10 +28,10 @@ unsigned int l128size(ByteStream* bs) {
   return len;
 }
 
-int l128read(ByteStream* bs, leb128_t* leb)  {
+int l128read(ByteStream* bs, leb128_t* leb) {
   int ret;
 
-  if (bs == NULL) return -1;
+  if (bs == NULL || leb == NULL) return -1;
 
   leb->size = l128size(bs);
 
@@ -37,11 +41,27 @@ int l128read(ByteStream* bs, leb128_t* leb)  {
 }
 
 int l128read_offset(ByteStream* bs, leb128_t* leb, uint32_t offset) {
-  if (bs == NULL) return -1;
+  if (bs == NULL || leb == NULL) return -1;
 
   bsseek(bs,offset);
 
   return l128read(bs,leb);
+}
+
+int l128write(ByteStream* bs, leb128_t* leb) {
+  int ret;
+
+  if (bs == NULL || leb == NULL) return 0;
+
+  return bswrite(bs,leb->data,leb->size);
+}
+
+int l128write_offset(ByteStream* bs, leb128_t* leb, uint32_t offset) {
+  if (bs == NULL || leb == NULL) return 0;
+
+  bsseek(bs,offset);
+  
+  return l128write(bs,leb);
 }
 
 unsigned int ul128toui(leb128_t uleb) {

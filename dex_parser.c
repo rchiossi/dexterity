@@ -183,25 +183,27 @@ DexClassDataItem* dx_classdata(ByteStream* bs, uint32_t offset) {
 DXP_FIXED(dx_typeitem,DexTypeItem);
 
 DexTypeList* dx_typelist(ByteStream* bs, uint32_t offset) {
-  DexTypeList* tl;
-  int ret;
+  DexTypeList* res;
+  int check;
   int i;
 
   if (bs == NULL) return NULL;
 
-  DX_ALLOC(DexTypeList,tl);
+  DX_ALLOC(DexTypeList,res);
 
-  ret = bsread_offset(bs,(uint8_t*) &(tl->size),sizeof(uint32_t),offset);
+  bsseek(bs,offset);
 
-  tl->meta.corrupted = (ret != sizeof(uint32_t));
-  if (tl->meta.corrupted) return tl;
+  check = bsread(bs,(uint8_t*) &(res->size),sizeof(uint32_t));
 
-  DX_ALLOC_LIST(DexTypeItem*,tl->list,tl->size);
+  res->meta.corrupted = (check != sizeof(uint32_t));
+  if (res->meta.corrupted) return res;
 
-  for (i=0; i<tl->size; i++)
-    tl->list[i] = dx_typeitem(bs,bs->offset);
+  DX_ALLOC_LIST(DexTypeItem*,res->list,res->size);
 
-  return tl;
+  for (i=0; i<res->size; i++)
+    res->list[i] = dx_typeitem(bs,bs->offset);
+
+  return res;
 }
 
 DXP_FIXED(dx_tryitem,DexTryItem)
@@ -355,7 +357,9 @@ DexMapList* dx_maplist(ByteStream* bs, uint32_t offset) {
 
   DX_ALLOC(DexMapList,res);
 
-  check = bsread_offset(bs,(uint8_t*)&(res->size),sizeof(uint32_t),offset);
+  bsseek(bs,offset);
+
+  check = bsread(bs,(uint8_t*)&(res->size),sizeof(uint32_t));
 
   res->meta.corrupted = (check != sizeof(uint32_t));
   if (res->meta.corrupted) return res;
@@ -498,9 +502,8 @@ DexEncodedAnnotation* dx_encodedannotation(ByteStream* bs, uint32_t offset) {
   return res;  
 }
 
-
 uint8_t* dx_debug_state_machine(ByteStream* bs, uint32_t offset) {
-  unsigned int size = 1;
+  uint32_t size = 1;
   char opcode;
   leb128_t leb;
   uint8_t* res;
@@ -536,10 +539,12 @@ uint8_t* dx_debug_state_machine(ByteStream* bs, uint32_t offset) {
 
   size = bs->offset - offset;
 
-  DX_ALLOC_LIST(uint8_t,res,size);  
+  DX_ALLOC_LIST(uint8_t,res,size + sizeof(uint32_t));  
 
   bsseek(bs,offset);
-  bsread(bs,res,size);
+  bsread(bs,(res+sizeof(uint32_t)),size);
+
+  ((uint32_t*) res)[0] = size;
 
   return res;    
 }
