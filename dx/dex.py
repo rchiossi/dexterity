@@ -2,15 +2,12 @@
 
 from ctypes import cdll
 from ctypes import Structure
-from ctypes import POINTER, pointer
+from ctypes import POINTER
 
 from ctypes import c_int, c_uint, c_uint8, c_uint16, c_uint32
 from ctypes import c_char_p
 
 from ctypes import create_string_buffer
-
-from ctypes import Array
-from _ctypes import _Pointer
 
 #Bytestream
 class _ByteStream(Structure):
@@ -553,6 +550,8 @@ class Dex(object):
     def __init__(self,filename):
         self.dxp = DexParser(filename)
 
+        self.size = self.dxp.bs._bs.contents.size
+
     def parse(self):        
         #header
         self.header = self.dxp.item('header')
@@ -652,3 +651,33 @@ class Dex(object):
                 off = item.entries[i].contents.annotation_off
                 self.annotations.append(self.dxp.item('annotationitem',off))
 
+    def save(self,filename):
+        bs = ByteStream(size=self.size)
+
+        self.header.file_size = self.size
+
+        dxlib.dxb_header(bs._bs,self.header)
+        dxlib.dxb_maplist(bs._bs,self.map_list)
+
+        for item in self.string_ids: dxlib.dxb_stringid(bs._bs,item)
+        for item in self.type_ids: dxlib.dxb_typeid(bs._bs,item)
+        for item in self.proto_ids: dxlib.dxb_protoid(bs._bs,item)
+        for item in self.field_ids: dxlib.dxb_fieldid(bs._bs,item)
+        for item in self.method_ids: dxlib.dxb_methodid(bs._bs,item)
+        for item in self.class_defs: dxlib.dxb_classdef(bs._bs,item)
+
+        for item in self.string_data_list: dxlib.dxb_stringdata(bs._bs,item)
+        for item in self.type_lists: dxlib.dxb_typelist(bs._bs,item)
+        for item in self.class_annotations: dxlib.dxb_annotationdirectoryitem(
+            bs._bs, item)
+        for item in self.class_data_list: dxlib.dxb_classdata(bs._bs,item)
+        for item in self.class_statics: dxlib.dxb_encodedarray(bs._bs,item)
+        for item in self.code_list: dxlib.dxb_codeitem(bs._bs,item)
+        for item in self.debug_info_list: dxlib.dxb_debuginfo(bs._bs,item)
+
+        for item in self.annotation_sets: dxlib.dxb_annotationsetitem(bs._bs,item)
+        for item in self.annotation_set_ref_lists: dxlib.dxb_annotationsetreflist(
+            bs._bs,item)
+        for item in self.annotations: dxlib.dxb_annotationitem(bs._bs,item)
+    
+        bs.save(filename)
