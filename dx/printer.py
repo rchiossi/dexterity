@@ -435,7 +435,7 @@ class DexPrinter (object):
             self.print_label('value',pad)
             self.print_label(obj.value.contents._type_,pad)            
             self.encodedannotation(cast(obj.value,
-                                        POINTER(DexEncodedAnnotation).contents),pad+2)
+                                        POINTER(DexEncodedAnnotation)).contents,pad+2)
         elif obj_type in [0x1e,0x1f]:
             self.print_label('value',pad)
         else:
