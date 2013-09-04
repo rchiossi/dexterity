@@ -376,7 +376,7 @@ class DexEncodedArrayItem(Structure):
         ]
 
 #Load Library
-dxlib = cdll.LoadLibrary("./dexterity.so")
+dxlib = cdll.LoadLibrary("lib/libdexterity.so")
 # ByteStream prototypes
 dxlib.bsalloc.argtypes = (c_uint,)
 dxlib.bsalloc.restype = POINTER(_ByteStream)

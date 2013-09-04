@@ -2,11 +2,11 @@
 
 import sys
 
-from dex import DexParser
-from dex import ByteStream
-from dex import dxlib
+from dx.dex import DexParser
+from dx.dex import ByteStream
+from dx.dex import dxlib
 
-from dxprinter import DexPrinter
+from dx.printer import DexPrinter
 
 def main():    
     target = sys.argv[-1]
