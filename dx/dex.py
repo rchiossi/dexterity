@@ -547,3 +547,108 @@ class DexParser(object):
         if offset != None: self.seek(offset)
 
         return dxlib.dx_debug_state_machine(self.bs._bs,self.bs._bs.contents.offset)
+
+#DexObj
+class Dex(object):
+    def __init__(self,filename):
+        self.dxp = DexParser(filename)
+
+    def parse(self):        
+        #header
+        self.header = self.dxp.item('header')
+        
+        #data from header
+        self.link_data = self.dxp.raw(self.header.link_off,self.header.link_size)
+        self.map_list = self.dxp.item('maplist',self.header.map_off)
+
+        self.string_ids = self.dxp.list('stringid' ,self.header.string_ids_size,
+                                   self.header.string_ids_off)
+        self.type_ids   = self.dxp.list('typeid'   ,self.header.type_ids_size,
+                                   self.header.type_ids_off)
+        self.proto_ids  = self.dxp.list('protoid'  ,self.header.proto_ids_size,
+                                   self.header.proto_ids_off)
+        self.field_ids  = self.dxp.list('fieldid'  ,self.header.field_ids_size,
+                                   self.header.field_ids_off)
+        self.method_ids = self.dxp.list('methodid' ,self.header.method_ids_size,
+                                   self.header.method_ids_off)
+        self.class_defs = self.dxp.list('classdef' ,self.header.class_defs_size,
+                                   self.header.class_defs_off)
+      
+        #data from string id
+        self.string_data_list = self.dxp.table('stringdata',self.string_ids,
+                                               'string_data_off')
+        
+        #data from proto id
+        self.type_lists = self.dxp.table('typelist',self.proto_ids,'parameters_off')
+        
+        #data from class def
+        self.type_lists += self.dxp.table('typelist',self.class_defs,'interfaces_off')
+        self.class_annotations = self.dxp.table('annotationdirectoryitem',
+                                      self.class_defs,'annotations_off')
+        self.class_data_list = self.dxp.table('classdata',self.class_defs,
+                                              'class_data_off')
+        self.class_statics = self.dxp.table('encodedarray',self.class_defs,
+                                            'static_values_off')
+        
+        #data from class data    
+        self.code_list = []  
+        
+        for class_data in self.class_data_list:
+            if class_data.meta.corrupted == True: continue
+            
+            for i in xrange(class_data.direct_methods_size.uleb()):
+                method = class_data.direct_methods[i].contents
+                if method.code_off.uleb() != 0:
+                    self.code_list.append(self.dxp.item('codeitem',
+                                                        method.code_off.uleb()))
+        
+            for i in xrange(class_data.virtual_methods_size.uleb()):
+                method = class_data.virtual_methods[i].contents
+                if method.code_off.uleb() != 0:
+                    self.code_list.append(self.dxp.item('codeitem',
+                                                        method.code_off.uleb()))
+
+        #data from code item
+        self.debug_info_list = self.dxp.table('debuginfo',self.code_list,
+                                              'debug_info_off')
+
+        #data from class annotations    
+        self.annotation_sets = self.dxp.table(
+            'annotationsetitem', self.class_annotations,'class_annotations_off')
+
+        self.annotation_set_ref_lists = []
+
+        for item in self.class_annotations:
+            if item.meta.corrupted == True: continue
+
+            for i in xrange(item.fields_size):            
+                off = item.field_annotations[i].contents.annotations_off
+                self.annotation_sets.append(self.dxp.item('annotationsetitem',off))
+
+            for i in xrange(item.annotated_methods_size):            
+                off = item.method_annotations[i].contents.annotations_off
+                self.annotation_sets.append(self.dxp.item('annotationsetitem',off))
+
+            for i in xrange(item.annotated_parameters_size):            
+                off = item.parameter_annotations[i].contents.annotations_off
+                self.annotation_set_ref_lists.append(
+                    self.dxp.item('annotationsetreflist', off))
+            
+        #data from annotation set ref lists
+        for item in self.annotation_set_ref_lists:
+            if item.meta.corrupted == True: continue
+
+            for i in xrange(item.size):            
+                off = item.list[i].contents.annotations_off
+                self.annotation_sets.append(self.dxp.item('annotationsetitem',off)) 
+
+        #data from annotation set item
+        self.annotations = []
+            
+        for item in self.annotation_sets:
+            if item.meta.corrupted == True: continue
+
+            for i in xrange(item.size):
+                off = item.entries[i].contents.annotation_off
+                self.annotations.append(self.dxp.item('annotationitem',off))
+
