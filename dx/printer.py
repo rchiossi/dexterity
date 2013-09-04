@@ -41,7 +41,7 @@ class DexPrinter (object):
         self.meta(obj.meta,pad)
 
         self.print_attr('magic',''.join(['%02x'%x for x in obj.magic]),pad,size)
-        self.print_attr('checksum',obj.checksum,pad,size)
+        self.print_attr('checksum',hex(obj.checksum),pad,size)
         self.print_attr('signature',''.join(['%02x'%x for x in obj.signature])
                         ,pad,size)
         self.print_attr('file_size',obj.file_size,pad,size)
