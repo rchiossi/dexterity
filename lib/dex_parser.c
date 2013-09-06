@@ -262,10 +262,10 @@ DexEncodedCatchHandler* dx_encodedcatchhandler(ByteStream* bs, uint32_t offset) 
 
   DX_ALLOC_LIST(DexEncodedTypeAddrPair*,res->handlers,ul128toui(res->size));
 
-  for (i=0; i<abs(sl128toui(res->size)); i++)
+  for (i=0; i<abs(sl128toi(res->size)); i++)
     res->handlers[i] = dx_encodedtypeaddrpair(bs,bs->offset);
 
-  if (sl128toui(res->size) <= 0) 
+  if (sl128toi(res->size) <= 0) 
     check |= l128read(bs,&(res->catch_all_addr));
 
   res->meta.corrupted = check || bs->exhausted;

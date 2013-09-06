@@ -2,7 +2,7 @@
 
 from ctypes import cdll
 from ctypes import Structure
-from ctypes import POINTER
+from ctypes import POINTER, pointer
 
 from ctypes import c_int, c_uint, c_uint8, c_uint16, c_uint32
 from ctypes import c_char_p
@@ -60,14 +60,29 @@ class Leb128(Structure):
         ('size',c_uint),
         ]
 
-    def uleb(self):
+class ULeb128(Leb128):
+    def __init__(self,val=None):
+        if val != None:
+            dxlib.uitoul128(pointer(self),val)
+
+    def __int__(self):
         return dxlib.ul128toui(self)
 
-    def ulebp1(self):
-        return dxlib.ul128p1toui(self)
+class SLeb128(Leb128):
+    def __init__(self,val=None):
+        if val != None:
+            dxlib.itosl128(pointer(self),val)
 
-    def sleb(self):
-        return dxlib.sl128toui(self)
+    def __int__(self):
+        return dxlib.sl128toi(self)
+
+class ULeb128p1(Leb128):
+    def __init__(self,val=None):
+        if val != None:
+            dxlib.itoul128p1(pointer(self),val)
+
+    def __int__(self):
+        return dxlib.ul128p1toi(self)
 
 #Dex
 class Metadata(Structure):
@@ -113,7 +128,7 @@ class DexStringIdItem(Structure):
 class DexStringDataItem(Structure):
     _fields_ = [
         ('meta', Metadata),
-        ('size', Leb128),
+        ('size', ULeb128),
         ('data', POINTER(c_uint8)),
         ]
 
@@ -163,25 +178,25 @@ class DexClassDefItem(Structure):
 class DexEncodedFieldItem(Structure):
     _fields_ = [
         ('meta', Metadata),
-        ('field_idx_diff',Leb128),
-        ('access_flags',Leb128),
+        ('field_idx_diff',ULeb128),
+        ('access_flags',ULeb128),
         ]
 
 class DexEncodedMethodItem(Structure):
     _fields_ = [
         ('meta', Metadata),
-        ('method_idx_diff',Leb128),
-        ('access_flags',Leb128),
-        ('code_off',Leb128),
+        ('method_idx_diff',ULeb128),
+        ('access_flags',ULeb128),
+        ('code_off',ULeb128),
         ]
 
 class DexClassDataItem(Structure):
     _fields_ = [
         ('meta', Metadata),
-        ('static_fields_size',Leb128),
-        ('instance_fields_size',Leb128),
-        ('direct_methods_size',Leb128),
-        ('virtual_methods_size',Leb128),
+        ('static_fields_size',ULeb128),
+        ('instance_fields_size',ULeb128),
+        ('direct_methods_size',ULeb128),
+        ('virtual_methods_size',ULeb128),
         ('static_fields',POINTER(POINTER(DexEncodedFieldItem))),
         ('instance_fields',POINTER(POINTER(DexEncodedFieldItem))),
         ('direct_methods',POINTER(POINTER(DexEncodedMethodItem))),
@@ -212,22 +227,22 @@ class DexTryItem(Structure):
 class DexEncodedTypeAddrPair(Structure):
     _fields_ = [
         ('meta', Metadata),
-        ('type_idx', Leb128),
-        ('addr', Leb128),
+        ('type_idx', ULeb128),
+        ('addr', ULeb128),
         ]
 
 class DexEncodedCatchHandler(Structure):
     _fields_ = [
         ('meta', Metadata),
-        ('size', Leb128),
+        ('size', SLeb128),
         ('handlers', POINTER(POINTER(DexEncodedTypeAddrPair))),
-        ('catch_all_addr', Leb128)
+        ('catch_all_addr', ULeb128)
         ]
 
 class DexEncodedCatchHandlerList(Structure):
     _fields_ = [
         ('meta', Metadata),
-        ('size',Leb128),
+        ('size',ULeb128),
         ('list',POINTER(POINTER(DexEncodedCatchHandler))),
         ]
 
@@ -249,9 +264,9 @@ class DexCodeItem(Structure):
 class DexDebugInfo(Structure):
     _fields_ = [
         ('meta', Metadata),
-        ('line_start', Leb128),
-        ('parameters_size', Leb128),
-        ('parameter_names', POINTER(Leb128)), 
+        ('line_start', ULeb128),
+        ('parameters_size', ULeb128),
+        ('parameter_names', POINTER(ULeb128p1)), 
         ('state_machine', POINTER(c_uint8)), 
         ]
 
@@ -281,25 +296,25 @@ class DexEncodedValue(Structure):
 class DexEncodedArray(Structure):
     _fields_ = [
         ('meta', Metadata),
-        ('size', Leb128),
+        ('size', ULeb128),
         ('values', POINTER(POINTER(DexEncodedValue))),
         ]
 
 class DexAnnotationElement(Structure):
     _fields_ = [
         ('meta', Metadata),
-        ('name_idx', Leb128),
+        ('name_idx', ULeb128),
         ('value', POINTER(DexEncodedValue)),
         ]
 
 class DexEncodedAnnotation(Structure):
     _fields_ = [
         ('meta', Metadata),
-        ('type_idx', Leb128),
-        ('size', Leb128),
+        ('type_idx', ULeb128),
+        ('size', ULeb128),
         ('elements', POINTER(POINTER(DexAnnotationElement))),
         ]
-# --
+
 class DexFieldAnnotation(Structure):
     _fields_ = [
         ('meta', Metadata),
@@ -403,11 +418,11 @@ dxlib.bssave.restype = None
 dxlib.ul128toui.argtypes = (Leb128,)
 dxlib.ul128toui.restype = c_uint
 
-dxlib.ul128p1toui.argtypes = (Leb128,)
-dxlib.ul128p1toui.restype = c_int
+dxlib.ul128p1toi.argtypes = (Leb128,)
+dxlib.ul128p1toi.restype = c_int
 
-dxlib.sl128toui.argtypes = (Leb128,)
-dxlib.sl128toui.restype = c_int
+dxlib.sl128toi.argtypes = (Leb128,)
+dxlib.sl128toi.restype = c_int
 
 #Dex prototypes
 def DXPARSE(name,res):
@@ -595,17 +610,17 @@ class Dex(object):
         for class_data in self.class_data_list:
             if class_data.meta.corrupted == True: continue
             
-            for i in xrange(class_data.direct_methods_size.uleb()):
+            for i in xrange(int(class_data.direct_methods_size)):
                 method = class_data.direct_methods[i].contents
-                if method.code_off.uleb() != 0:
+                if int(method.code_off) != 0:
                     self.code_list.append(self.dxp.item('codeitem',
-                                                        method.code_off.uleb()))
+                                                        int(method.code_off)))
         
-            for i in xrange(class_data.virtual_methods_size.uleb()):
+            for i in xrange(int(class_data.virtual_methods_size)):
                 method = class_data.virtual_methods[i].contents
-                if method.code_off.uleb() != 0:
+                if int(method.code_off) != 0:
                     self.code_list.append(self.dxp.item('codeitem',
-                                                        method.code_off.uleb()))
+                                                        int(method.code_off)))
 
         #data from code item
         self.debug_info_list = self.dxp.table('debuginfo',self.code_list,

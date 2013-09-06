@@ -64,8 +64,8 @@ int l128write_offset(ByteStream* bs, leb128_t* leb, uint32_t offset) {
   return l128write(bs,leb);
 }
 
-unsigned int ul128toui(leb128_t uleb) {
-  unsigned int val = 0;
+uint32_t ul128toui(leb128_t uleb) {
+  uint32_t val = 0;
   int i;
   
   for (i=uleb.size-1; i>=0; i--) {
@@ -75,18 +75,75 @@ unsigned int ul128toui(leb128_t uleb) {
   return val;
 }
 
-int ul128p1toui(leb128_t ulebp1) {  
+int32_t ul128p1toi(leb128_t ulebp1) {  
   return ul128toui(ulebp1)-1;
 }
 
-int sl128toui(leb128_t sleb) {
-  int val = 0;
+int32_t sl128toi(leb128_t sleb) {
+  int32_t val = 0;
+  uint32_t mask;
   
   val = ul128toui(sleb);
 
-  if ((sleb.data[sleb.size-1] & 0x40) != 0) {
+  if ((sleb.size != 5) && (sleb.data[sleb.size-1] & 0x40) != 0) {
     val = val | ~((1 << (sleb.size*7))-1);
   }
 
   return val;
+}
+
+void uitoul128(leb128_t* leb, uint32_t num) {
+  int i;
+
+  for (i=0; i<5; i++) {
+    if (i == 4)
+      leb->data[i] = num & 0x4f;
+    else
+      leb->data[i] = num & 0x7f;
+
+    num /= 128;
+    
+    if (num == 0) break;
+
+    leb->data[i] |= 0x80;
+  }
+
+  leb->size = i+1;
+}
+
+void itoul128p1(leb128_t* leb, int32_t num) {
+  uitoul128(leb,(uint32_t) num+1);
+}
+
+void itosl128(leb128_t* leb, int32_t num) {
+  int i;
+
+  leb->data[0] = ((num >> 00) & 0x7f) | 0x80;
+  leb->data[1] = ((num >> 07) & 0x7f) | 0x80;
+  leb->data[2] = ((num >> 14) & 0x7f) | 0x80;
+  leb->data[3] = ((num >> 21) & 0x7f) | 0x80;
+  leb->data[4] = ((num >> 28) & 0x4f) | 0x00;
+
+  leb->size = 5;
+
+  if (leb->data[4] == 0x00 || leb->data[4] == 0x4f) {
+    leb->size--;
+
+    for (i=3; i>0; i--) {
+      if (leb->data[i] == 0x80 || leb->data[i] == 0xff)
+	leb->size--;
+      else 
+	break;
+    }
+  }
+
+  if (num > 0 && (leb->data[leb->size-1] & 0x40) != 0x0) {
+    leb->size++;
+  } 
+
+  if (num < 0 && (leb->data[leb->size-1] & 0x40) == 0x0) {
+    leb->size++;
+  } 
+
+  leb->data[leb->size-1] &= 0x7f;
 }

@@ -142,10 +142,10 @@ void dxb_encodedcatchhandler(ByteStream* bs, DexEncodedCatchHandler* obj) {
 
   l128write(bs,&(obj->size));
 
-  for (i=0; i<abs(sl128toui(obj->size)); i++)
+  for (i=0; i<abs(sl128toi(obj->size)); i++)
     dxb_encodedtypeaddrpair(bs,obj->handlers[i]);
 
-  if (sl128toui(obj->size) <= 0) 
+  if (sl128toi(obj->size) <= 0) 
     l128write(bs,&(obj->catch_all_addr));
 }
 

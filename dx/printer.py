@@ -83,8 +83,8 @@ class DexPrinter (object):
 
         self.meta(obj.meta,pad)
 
-        self.print_attr('size',obj.size.uleb(),pad,size)
-        self.print_attr('data',str(cast(obj.data,c_char_p).value)[:obj.size.uleb()],
+        self.print_attr('size',int(obj.size),pad,size)
+        self.print_attr('data',str(cast(obj.data,c_char_p).value)[:int(obj.size)],
                         pad,size)
 
     def typeid(self,obj,pad=0):
@@ -160,8 +160,8 @@ class DexPrinter (object):
 
         self.meta(obj.meta,pad)
 
-        self.print_attr('field_idx_diff',obj.field_idx_diff.uleb(),pad,size)
-        self.print_attr('access_flags',obj.access_flags.uleb(),pad,size)
+        self.print_attr('field_idx_diff',int(obj.field_idx_diff),pad,size)
+        self.print_attr('access_flags',int(obj.access_flags),pad,size)
 
     def encodedmethod(self,obj,pad=0):
         self.print_label("EncodedMethod",pad)
@@ -171,9 +171,9 @@ class DexPrinter (object):
 
         self.meta(obj.meta,pad)
 
-        self.print_attr('method_idx_diff',obj.method_idx_diff.uleb(),pad,size)
-        self.print_attr('access_flags',obj.access_flags.uleb(),pad,size)
-        self.print_attr('code_off',hex(obj.code_off.uleb()),pad,size)
+        self.print_attr('method_idx_diff',int(obj.method_idx_diff),pad,size)
+        self.print_attr('access_flags',int(obj.access_flags),pad,size)
+        self.print_attr('code_off',hex(int(obj.code_off)),pad,size)
 
     def classdata(self,obj,pad=0):
         self.print_label("ClassData",pad)
@@ -183,27 +183,27 @@ class DexPrinter (object):
 
         self.meta(obj.meta,pad)
 
-        self.print_attr('static_fields_size',obj.static_fields_size.uleb(),pad,size)
-        self.print_attr('instance_fields_size',obj.instance_fields_size.uleb(),
+        self.print_attr('static_fields_size',int(obj.static_fields_size),pad,size)
+        self.print_attr('instance_fields_size',int(obj.instance_fields_size),
                         pad,size)
-        self.print_attr('direct_methods_size',obj.direct_methods_size.uleb(),pad,size)
-        self.print_attr('virtual_methods_size',obj.virtual_methods_size.uleb(),
+        self.print_attr('direct_methods_size',int(obj.direct_methods_size),pad,size)
+        self.print_attr('virtual_methods_size',int(obj.virtual_methods_size),
                         pad,size)
 
         self.print_label("static_fields",pad)
-        for i in xrange(obj.static_fields_size.uleb()):
+        for i in xrange(int(obj.static_fields_size)):
             self.encodedfield(obj.static_fields[i].contents,pad+2)
 
         self.print_label("instance_fields",pad)
-        for i in xrange(obj.instance_fields_size.uleb()):
+        for i in xrange(int(obj.instance_fields_size)):
             self.encodedfield(obj.instance_fields[i].contents,pad+2)
 
         self.print_label("direct_methods",pad)
-        for i in xrange(obj.direct_methods_size.uleb()):
+        for i in xrange(int(obj.direct_methods_size)):
             self.encodedmethod(obj.direct_methods[i].contents,pad+2)
 
         self.print_label("virtual_methods",pad)
-        for i in xrange(obj.virtual_methods_size.uleb()):
+        for i in xrange(int(obj.virtual_methods_size)):
             self.encodedmethod(obj.virtual_methods[i].contents,pad+2)
 
     def typeitem(self,obj,pad=0):
@@ -249,8 +249,8 @@ class DexPrinter (object):
 
         self.meta(obj.meta,pad)
 
-        self.print_attr('type_idx',obj.type_idx.uleb(),pad,size)
-        self.print_attr('addr',hex(obj.addr.uleb()),pad,size)
+        self.print_attr('type_idx',int(obj.type_idx),pad,size)
+        self.print_attr('addr',hex(int(obj.addr)),pad,size)
 
     def encodedcatchhandler(self,obj,pad=0):
         self.print_label("EncodedCatchHandler",pad)
@@ -260,14 +260,14 @@ class DexPrinter (object):
 
         self.meta(obj.meta,pad)
 
-        self.print_attr('size',obj.size.sleb(),pad,size)
+        self.print_attr('size',int(obj.size),pad,size)
 
         self.print_label('handlers',pad)
-        for i in xrange(abs(obj.size.sleb())):
+        for i in xrange(abs(int(obj.size))):
             self.encodedtypeaddrpair(obj.handlers[i].contents,pad)
 
-        if obj.size.sleb() <= 0:
-            self.print_attr('catch_all_addr',hex(obj.catch_all_addr.uleb()),pad,size)
+        if int(obj.size) <= 0:
+            self.print_attr('catch_all_addr',hex(int(obj.catch_all_addr)),pad,size)
 
     def encodedcatchhandlerlist(self,obj,pad=0):
         self.print_label("EncodedCatchHandlerList",pad)
@@ -277,10 +277,10 @@ class DexPrinter (object):
 
         self.meta(obj.meta,pad)
 
-        self.print_attr('size',obj.size.uleb(),pad,size)
+        self.print_attr('size',int(obj.size),pad,size)
 
         self.print_label('list',pad)
-        for i in xrange(obj.size.uleb()):
+        for i in xrange(int(obj.size)):
             self.encodedcatchhandler(obj.list[i].contents,pad+2)
 
     def codeitem(self,obj,pad=0):
@@ -327,12 +327,12 @@ class DexPrinter (object):
 
         self.meta(obj.meta,pad)
 
-        self.print_attr('line_start',obj.line_start.uleb(),pad,size)
-        self.print_attr('parameters_size',obj.parameters_size.uleb(),pad,size)
+        self.print_attr('line_start',int(obj.line_start),pad,size)
+        self.print_attr('parameters_size',int(obj.parameters_size),pad,size)
 
         self.print_label('parameter_names',pad)
-        for i in xrange(obj.parameters_size.uleb()):
-            print ' '*(pad+2) + '%d' % obj.parameter_names[i].ulebp1()
+        for i in xrange(int(obj.parameters_size)):
+            print ' '*(pad+2) + '%d' % int(obj.parameter_names[i])
 
         self.print_label('state_machine',pad)
         line = ' '*(pad+2)
@@ -451,10 +451,10 @@ class DexPrinter (object):
 
         size = self.max_attr(obj)
 
-        self.print_attr('size',obj.size.uleb(),pad,size)
+        self.print_attr('size',int(obj.size),pad,size)
 
         self.print_label('values',pad)
-        for i in xrange(obj.size.uleb()):
+        for i in xrange(int(obj.size)):
             self.encodedvalue(obj.values[i].contents,pad+2)
         
     def annotationelement(self,obj,pad=0):
@@ -466,7 +466,7 @@ class DexPrinter (object):
 
         size = self.max_attr(obj)
 
-        self.print_attr('name_idx',obj.name_idx.uleb(),pad,size)
+        self.print_attr('name_idx',int(obj.name_idx),pad,size)
         self.print_label('value',pad)
         self.encodedvalue(obj.value.contents,pad+2)
 
@@ -479,11 +479,11 @@ class DexPrinter (object):
 
         size = self.max_attr(obj)
 
-        self.print_attr('type_idx',obj.type_idx.uleb(),pad,size)
-        self.print_attr('size',obj.size.uleb(),pad,size)
+        self.print_attr('type_idx',int(obj.type_idx),pad,size)
+        self.print_attr('size',int(obj.size),pad,size)
 
         self.print_label('elements',pad)
-        for i in xrange(obj.size.uleb()):
+        for i in xrange(int(obj.size)):
             self.annotationelement(obj.elements[i].contents,pad+2)
 
     def fieldannotation(self,obj,pad=0):
