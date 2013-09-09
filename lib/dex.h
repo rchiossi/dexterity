@@ -370,4 +370,45 @@ DXBUILD(dxb_annotationsetitem,DexAnnotationSetItem);
 DXBUILD(dxb_annotationitem,DexAnnotationItem);
 DXBUILD(dxb_encodedarrayitem,DexEncodedArrayItem);
 
+//Offset shift
+#define DXOFFSET(_name,_type) void _name (_type* obj, uint32_t base, int32_t delta)
+
+DXOFFSET(dxo_header,DexHeaderItem);
+DXOFFSET(dxo_stringid,DexStringIdItem);
+DXOFFSET(dxo_typeid,DexTypeIdItem);
+DXOFFSET(dxo_protoid,DexProtoIdItem);
+DXOFFSET(dxo_fieldid,DexFieldIdItem);
+DXOFFSET(dxo_methodid,DexMethodIdItem);
+DXOFFSET(dxo_classdef,DexClassDefItem);
+DXOFFSET(dxo_stringdata,DexStringDataItem);
+DXOFFSET(dxo_encodedfield,DexEncodedFieldItem);
+DXOFFSET(dxo_encodedmethod,DexEncodedMethodItem);
+DXOFFSET(dxo_classdata,DexClassDataItem);
+DXOFFSET(dxo_typeitem,DexTypeItem);
+DXOFFSET(dxo_typelist,DexTypeList);
+DXOFFSET(dxo_tryitem,DexTryItem);
+DXOFFSET(dxo_encodedtypeaddrpair,DexEncodedTypeAddrPair);
+DXOFFSET(dxo_encodedcatchhandler,DexEncodedCatchHandler);
+DXOFFSET(dxo_encodedcatchhandlerlist,DexEncodedCatchHandlerList);
+DXOFFSET(dxo_codeitem,DexCodeItem);
+DXOFFSET(dxo_debuginfo,DexDebugInfo);
+DXOFFSET(dxo_mapitem,DexMapItem);
+DXOFFSET(dxo_maplist,DexMapList);
+
+DXOFFSET(dxo_encodedvalue,DexEncodedValue);
+DXOFFSET(dxo_encodedarray,DexEncodedArray);
+DXOFFSET(dxo_annotationelement,DexAnnotationElement);
+DXOFFSET(dxo_encodedannotation,DexEncodedAnnotation);
+
+DXOFFSET(dxo_fieldannotation,DexFieldAnnotation);
+DXOFFSET(dxo_methodannotation,DexMethodAnnotation);
+DXOFFSET(dxo_parameterannotation,DexParameterAnnotation);
+DXOFFSET(dxo_annotationdirectoryitem,DexAnnotationDirectoryItem);
+DXOFFSET(dxo_annotationsetrefitem,DexAnnotationSetRefItem);
+DXOFFSET(dxo_annotationsetreflist,DexAnnotationSetRefList);
+DXOFFSET(dxo_annotationoffitem,DexAnnotationOffItem);
+DXOFFSET(dxo_annotationsetitem,DexAnnotationSetItem);
+DXOFFSET(dxo_annotationitem,DexAnnotationItem);
+DXOFFSET(dxo_encodedarrayitem,DexEncodedArrayItem);
+
 #endif
