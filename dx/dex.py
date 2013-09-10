@@ -4,7 +4,7 @@ from ctypes import cdll
 from ctypes import Structure
 from ctypes import POINTER, pointer
 
-from ctypes import c_int, c_uint, c_uint8, c_uint16, c_uint32
+from ctypes import c_int, c_uint, c_uint8, c_uint16, c_uint32, c_int32
 from ctypes import c_char_p
 
 from ctypes import create_string_buffer
@@ -516,6 +516,49 @@ DXBUILD('dxb_annotationsetitem',DexAnnotationSetItem);
 DXBUILD('dxb_annotationitem',DexAnnotationItem);
 DXBUILD('dxb_encodedarrayitem',DexEncodedArrayItem);
 
+def DXOFFSET(name,obj):
+    global dxlib
+    getattr(dxlib,name).argtypes = (POINTER(obj),c_uint32,c_int32)
+    getattr(dxlib,name).restype  = None
+
+DXOFFSET('dxo_header',DexHeaderItem);
+DXOFFSET('dxo_stringid',DexStringIdItem);
+DXOFFSET('dxo_typeid',DexTypeIdItem);
+DXOFFSET('dxo_protoid',DexProtoIdItem);
+DXOFFSET('dxo_fieldid',DexFieldIdItem);
+DXOFFSET('dxo_methodid',DexMethodIdItem);
+DXOFFSET('dxo_classdef',DexClassDefItem);
+DXOFFSET('dxo_stringdata',DexStringDataItem);
+DXOFFSET('dxo_encodedfield',DexEncodedFieldItem);
+DXOFFSET('dxo_encodedmethod',DexEncodedMethodItem);
+DXOFFSET('dxo_classdata',DexClassDataItem);
+DXOFFSET('dxo_typeitem',DexTypeItem);
+DXOFFSET('dxo_typelist',DexTypeList);
+DXOFFSET('dxo_tryitem',DexTryItem);
+DXOFFSET('dxo_encodedtypeaddrpair',DexEncodedTypeAddrPair);
+DXOFFSET('dxo_encodedcatchhandler',DexEncodedCatchHandler);
+DXOFFSET('dxo_encodedcatchhandlerlist',DexEncodedCatchHandlerList);
+DXOFFSET('dxo_codeitem',DexCodeItem);
+DXOFFSET('dxo_debuginfo',DexDebugInfo);
+DXOFFSET('dxo_mapitem',DexMapItem);
+DXOFFSET('dxo_maplist',DexMapList);
+
+DXOFFSET('dxo_encodedvalue',DexEncodedValue);
+DXOFFSET('dxo_encodedarray',DexEncodedArray);
+DXOFFSET('dxo_annotationelement',DexAnnotationElement);
+DXOFFSET('dxo_encodedannotation',DexEncodedAnnotation);
+
+DXOFFSET('dxo_fieldannotation',DexFieldAnnotation);
+DXOFFSET('dxo_methodannotation',DexMethodAnnotation);
+DXOFFSET('dxo_parameterannotation',DexParameterAnnotation);
+DXOFFSET('dxo_annotationdirectoryitem',DexAnnotationDirectoryItem);
+DXOFFSET('dxo_annotationsetrefitem',DexAnnotationSetRefItem);
+DXOFFSET('dxo_annotationsetreflist',DexAnnotationSetRefList);
+DXOFFSET('dxo_annotationoffitem',DexAnnotationOffItem);
+DXOFFSET('dxo_annotationsetitem',DexAnnotationSetItem);
+DXOFFSET('dxo_annotationitem',DexAnnotationItem);
+DXOFFSET('dxo_encodedarrayitem',DexEncodedArrayItem);
+
 #DexParser
 class DexParser(object):
     def __init__(self,filename):
@@ -696,3 +739,28 @@ class Dex(object):
         for item in self.annotations: dxlib.dxb_annotationitem(bs._bs,item)
     
         bs.save(filename)
+
+    def shift_offsets(self,base,delta):
+        dxlib.dxo_header(self.header,base,delta)
+        dxlib.dxo_maplist(self.map_list,base,delta)
+
+        for item in self.string_ids: dxlib.dxo_stringid(item,base,delta)
+        for item in self.type_ids: dxlib.dxo_typeid(item,base,delta)
+        for item in self.proto_ids: dxlib.dxo_protoid(item,base,delta)
+        for item in self.field_ids: dxlib.dxo_fieldid(item,base,delta)
+        for item in self.method_ids: dxlib.dxo_methodid(item,base,delta)
+        for item in self.class_defs: dxlib.dxo_classdef(item,base,delta)
+
+        for item in self.string_data_list: dxlib.dxo_stringdata(item,base,delta)
+        for item in self.type_lists: dxlib.dxo_typelist(item,base,delta)
+        for item in self.class_annotations: dxlib.dxo_annotationdirectoryitem(
+            item,base,delta)
+        for item in self.class_data_list: dxlib.dxo_classdata(item,base,delta)
+        for item in self.class_statics: dxlib.dxo_encodedarray(item,base,delta)
+        for item in self.code_list: dxlib.dxo_codeitem(item,base,delta)
+        for item in self.debug_info_list: dxlib.dxo_debuginfo(item,base,delta)
+
+        for item in self.annotation_sets: dxlib.dxo_annotationsetitem(item,base,delta)
+        for item in self.annotation_set_ref_lists: dxlib.dxo_annotationsetreflist(
+            item,base,delta)
+        for item in self.annotations: dxlib.dxo_annotationitem(item,base,delta)

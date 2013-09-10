@@ -288,4 +288,3 @@ void dxo_encodedarrayitem(DexEncodedArrayItem* obj, uint32_t base, int32_t delta
 
   dxo_encodedarray(obj->value,base,delta);
 }
-
