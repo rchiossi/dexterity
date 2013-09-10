@@ -13,7 +13,7 @@ def update_checksum(filename):
 
     f.seek(8)
 
-    f.write(struct.pack('<I',checksum))
+    f.write(struct.pack('<I',checksum & 0xffffffff))
 
     f.close()
 

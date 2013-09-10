@@ -13,54 +13,54 @@ def print_dump(args):
 
     if args.H:
         printer.header(dex.header)
-    elif args.X:
+    if args.X:
         printer.maplist(dex.map_list)   
-    elif args.S:
+    if args.S:
         for item in dex.string_ids:
             printer.stringid(item)
-    elif args.T:
+    if args.T:
         for item in dex.type_ids:
             printer.typeid(item)
-    elif args.P:
+    if args.P:
         for item in dex.proto_ids:
             printer.protoid(item)
-    elif args.F:
+    if args.F:
         for item in dex.field_ids:
             printer.fieldid(item)
-    elif args.M:
+    if args.M:
         for item in dex.method_ids:
             printer.methodid(item)
-    elif args.C:
+    if args.C:
         for item in dex.class_defs:
             printer.classdef(item)
-    elif args.t:
+    if args.t:
         for item in dex.type_lists:
             printer.typelist(item)
-    elif args.s:
+    if args.s:
         for item in dex.string_data_list:
             printer.stringdata(item)
-    elif args.c:
+    if args.c:
         for item in dex.class_data_list:
             printer.classdata(item)
-    elif args.b:
+    if args.b:
         for item in dex.code_list:
             printer.codeitem(item)
-    elif args.d:
+    if args.d:
         for item in dex.debug_info_list:
             printer.debuginfo(item)
-    elif args.i:
+    if args.i:
         for item in dex.class_statics:
             printer.encodedarray(item)
-    elif args.n:
+    if args.n:
         for item in dex.class_annotations:
             printer.annotationdirectoryitem(item)
-    elif args.l:
+    if args.l:
         for item in dex.annotation_set_ref_lists:
             printer.annotationsetreflist(item)
-    elif args.e:
+    if args.e:
         for item in dex.annotation_sets:
             printer.annotationsetitem(item)
-    elif args.r:
+    if args.r:
         for item in dex.annotations:
             printer.annotationitem(item)
 

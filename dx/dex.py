@@ -789,7 +789,7 @@ class Dex(object):
         for item in self.method_ids: dxlib.dxsi_methodid(item,base,delta)
         for item in self.class_defs: dxlib.dxsi_classdef(item,base,delta)
 
-        for item in self.class_statics: dxlib.dxsi_encodedarray(item,base,delta)
+        #for item in self.class_statics: dxlib.dxsi_encodedarray(item,base,delta)
         for item in self.debug_info_list: dxlib.dxsi_debuginfo(item,base,delta)
 
-        for item in self.annotations: dxlib.dxsi_annotationitem(item,base,delta)
+        #for item in self.annotations: dxlib.dxsi_annotationitem(item,base,delta)
