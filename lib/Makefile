@@ -3,7 +3,7 @@ CFLAGS = -fPIC -std=gnu99 -g
 
 LIB = libdexterity.so
 
-CORE = bytestream dex_builder dex_parser dex_offset leb128
+CORE = bytestream dex_builder dex_parser dex_offset dex_stringid leb128
 
 .PHONY: all clean
 

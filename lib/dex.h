@@ -411,4 +411,19 @@ DXOFFSET(dxo_annotationsetitem,DexAnnotationSetItem);
 DXOFFSET(dxo_annotationitem,DexAnnotationItem);
 DXOFFSET(dxo_encodedarrayitem,DexEncodedArrayItem);
 
+//string_id shift
+#define DXSTRINGID(_name,_type) void _name (_type* obj, uint32_t base, int32_t delta)
+
+DXSTRINGID(dxsi_typeid,DexTypeIdItem);
+DXSTRINGID(dxsi_protoid,DexProtoIdItem);
+DXSTRINGID(dxsi_fieldid,DexFieldIdItem);
+DXSTRINGID(dxsi_methodid,DexMethodIdItem);
+DXSTRINGID(dxsi_classdef,DexClassDefItem);
+DXSTRINGID(dxsi_debuginfo,DexDebugInfo);
+DXSTRINGID(dxsi_encodedvalue,DexEncodedValue);
+DXSTRINGID(dxsi_encodedarray,DexEncodedArray);
+DXSTRINGID(dxsi_annotationelement,DexAnnotationElement);
+DXSTRINGID(dxsi_encodedannotation,DexEncodedAnnotation);
+DXSTRINGID(dxsi_annotationitem,DexAnnotationItem);
+
 #endif

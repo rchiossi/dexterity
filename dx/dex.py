@@ -559,6 +559,23 @@ DXOFFSET('dxo_annotationsetitem',DexAnnotationSetItem);
 DXOFFSET('dxo_annotationitem',DexAnnotationItem);
 DXOFFSET('dxo_encodedarrayitem',DexEncodedArrayItem);
 
+def DXSTRINGID(name,obj):
+    global dxlib
+    getattr(dxlib,name).argtypes = (POINTER(obj),c_uint32,c_int32)
+    getattr(dxlib,name).restype  = None
+
+DXSTRINGID('dxsi_typeid',DexTypeIdItem);
+DXSTRINGID('dxsi_protoid',DexProtoIdItem);
+DXSTRINGID('dxsi_fieldid',DexFieldIdItem);
+DXSTRINGID('dxsi_methodid',DexMethodIdItem);
+DXSTRINGID('dxsi_classdef',DexClassDefItem);
+DXSTRINGID('dxsi_debuginfo',DexDebugInfo);
+DXSTRINGID('dxsi_encodedvalue',DexEncodedValue);
+DXSTRINGID('dxsi_encodedarray',DexEncodedArray);
+DXSTRINGID('dxsi_annotationelement',DexAnnotationElement);
+DXSTRINGID('dxsi_encodedannotation',DexEncodedAnnotation);
+DXSTRINGID('dxsi_annotationitem',DexAnnotationItem);
+
 #DexParser
 class DexParser(object):
     def __init__(self,filename):
@@ -764,3 +781,15 @@ class Dex(object):
         for item in self.annotation_set_ref_lists: dxlib.dxo_annotationsetreflist(
             item,base,delta)
         for item in self.annotations: dxlib.dxo_annotationitem(item,base,delta)
+        
+    def shift_stringids(self,base,delta):
+        for item in self.type_ids: dxlib.dxsi_typeid(item,base,delta)
+        for item in self.proto_ids: dxlib.dxsi_protoid(item,base,delta)
+        for item in self.field_ids: dxlib.dxsi_fieldid(item,base,delta)
+        for item in self.method_ids: dxlib.dxsi_methodid(item,base,delta)
+        for item in self.class_defs: dxlib.dxsi_classdef(item,base,delta)
+
+        for item in self.class_statics: dxlib.dxsi_encodedarray(item,base,delta)
+        for item in self.debug_info_list: dxlib.dxsi_debuginfo(item,base,delta)
+
+        for item in self.annotations: dxlib.dxsi_annotationitem(item,base,delta)
