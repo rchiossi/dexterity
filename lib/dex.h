@@ -280,11 +280,51 @@ typedef struct _DexEncodedArrayItem {
 //TODO
 typedef struct _Dex {
   DexHeaderItem* header;
+  DexMapList* map_list;
   DexStringIdItem** string_ids;
   DexTypeIdItem** type_ids;
+  DexProtoIdItem** proto_ids;
+  DexFieldIdItem** field_ids;
+  DexMethodIdItem** method_ids;
+  DexClassDefItem** class_defs;
+  DexStringDataItem** string_data_list;
+  DexTypeList** type_lists;
+  DexAnnotationDirectoryItem** an_directories;
+  DexClassDataItem** class_data;
+  DexEncodedArray** encoded_arrays;
+  DexCodeItem** code_list;
+  DexDebugInfo** debug_info_list;
+  DexAnnotationSetItem** an_set;
+  DexAnnotationSetRefList** an_set_ref_lists;
+  DexAnnotationItem** annotations;
+  uint8_t* link_data;
+
+  //Allocation metadata
+  struct {
+    size_t type_lists_size; 
+    size_t type_lists_alloc; 
+    size_t an_directories_size; 
+    size_t an_directories_alloc; 
+    size_t class_data_size;
+    size_t class_data_alloc;
+    size_t encoded_arrays_size;
+    size_t encoded_arrays_alloc;
+    size_t code_list_size;
+    size_t code_list_alloc;
+    size_t debug_info_list_size;
+    size_t debug_info_list_alloc;
+    size_t an_set_size;
+    size_t an_set_alloc;
+    size_t an_set_ref_lists_size;
+    size_t an_set_ref_lists_alloc;
+    size_t annotations_size;
+    size_t annotations_alloc;
+  } meta;
 } Dex;
 
 //Parse
+Dex* dx_parse(ByteStream* bs);
+
 #define DXPARSE(_name,_type) _type* _name (ByteStream* bs, uint32_t offset)
 
 DXPARSE(dx_header,DexHeaderItem);

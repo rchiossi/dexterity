@@ -6,6 +6,7 @@ from ctypes import POINTER, pointer
 
 from ctypes import c_int, c_uint, c_uint8, c_uint16, c_uint32, c_int32
 from ctypes import c_char_p
+from ctypes import c_size_t
 
 from ctypes import create_string_buffer
 
@@ -387,6 +388,53 @@ class DexEncodedArrayItem(Structure):
         ('value', POINTER(DexEncodedArray)),
         ]
 
+# C dex object
+class DexMeta(Structure):
+    _fields_ = [
+        ('type_lists_size',c_size_t),
+        ('type_lists_alloc',c_size_t),
+        ('an_directories_size',c_size_t),
+        ('an_directories_alloc',c_size_t),
+        ('class_data_size',c_size_t),
+        ('class_data_alloc',c_size_t),
+        ('encoded_arrays_size',c_size_t),
+        ('encoded_arrays_alloc',c_size_t),
+        ('code_list_size',c_size_t),
+        ('code_list_alloc',c_size_t),
+        ('debug_info_list_size',c_size_t),
+        ('debug_info_list_alloc',c_size_t),
+        ('an_set_size',c_size_t),
+        ('an_set_alloc',c_size_t),
+        ('an_set_ref_lists_size',c_size_t),
+        ('an_set_ref_lists_alloc',c_size_t),
+        ('annotations_size',c_size_t),
+        ('annotations_alloc',c_size_t),
+        ]
+
+class DexObj(Structure):
+    _fields_ = [
+        ('header',POINTER(DexHeaderItem)),
+        ('map_list',POINTER(DexMapList)),
+        ('string_ids',POINTER(POINTER(DexStringIdItem))),
+        ('type_ids',POINTER(POINTER(DexTypeIdItem))),
+        ('proto_ids',POINTER(POINTER(DexProtoIdItem))),
+        ('field_ids',POINTER(POINTER(DexFieldIdItem))),
+        ('method_ids',POINTER(POINTER(DexMethodIdItem))),
+        ('class_defs',POINTER(POINTER(DexClassDefItem))),
+        ('string_data_list',POINTER(POINTER(DexStringDataItem))),
+        ('type_lists',POINTER(POINTER(DexTypeList))),
+        ('an_directories',POINTER(POINTER(DexAnnotationDirectoryItem))),
+        ('class_data',POINTER(POINTER(DexClassDataItem))),
+        ('encoded_arrays',POINTER(POINTER(DexEncodedArray))),
+        ('code_list',POINTER(POINTER(DexCodeItem))),
+        ('debug_info_list',POINTER(POINTER(DexDebugInfo))),
+        ('an_set',POINTER(POINTER(DexAnnotationSetItem))),
+        ('an_set_ref_lists',POINTER(POINTER(DexAnnotationSetRefList))),
+        ('annotations',POINTER(POINTER(DexAnnotationItem))),
+        ('link_data',POINTER(c_uint8)),
+        ('meta', DexMeta),
+        ]
+
 #Load Library
 dxlib = cdll.LoadLibrary("lib/libdexterity.so")
 # ByteStream prototypes
@@ -425,6 +473,9 @@ dxlib.sl128toi.argtypes = (Leb128,)
 dxlib.sl128toi.restype = c_int
 
 #Dex prototypes
+dxlib.dx_parse.argtypes = (POINTER(_ByteStream),)
+dxlib.dx_parse.restype  = POINTER(DexObj)
+
 def DXPARSE(name,res):
     global dxlib
     getattr(dxlib,name).argtypes = (POINTER(_ByteStream),c_uint32)

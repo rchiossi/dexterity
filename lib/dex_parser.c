@@ -24,6 +24,13 @@
   }							\
   } while(0)
 
+#define DX_REALLOC_LIST(_type,_var,_cur_size)				\
+  do {									\
+    (_var) = (_type*) realloc((_var),sizeof(_type)*(_cur_size)*2);	\
+    if ((_var) == NULL) alloc_fail();					\
+    _cur_size *= 2;							\
+  } while(0)
+
 #define DXP_FIXED(_name,_type)			      \
   DXPARSE(_name,_type) {			      \
   _type* res;					      \
@@ -695,4 +702,262 @@ DexEncodedArrayItem* dx_encodedarrayitem(ByteStream* bs, uint32_t offset) {
   res->meta.corrupted = bs->exhausted;
   
   return res;
+}
+
+#define DX_READ_TABLE(_TYPE,_FUNC,_NUM,_OFFVAR,_VAR,_TSIZE,_TALLOC) \
+  do {									\
+    for (i=0; i< (_NUM); i++) {						\
+      if (_OFFVAR == 0) continue;					\
+      									\
+      if ((_TSIZE) >= (_TALLOC)) {					\
+      	DX_REALLOC_LIST(_TYPE, (_VAR),(_TALLOC));			\
+      }									\
+      									\
+      (_VAR)[(_TSIZE)] = _FUNC(bs,_OFFVAR);				\
+      (_TSIZE)++;							\
+    }									\
+  } while(0)
+
+Dex* dx_parse(ByteStream* bs) {
+  Dex* dx;
+
+  unsigned int i,j;
+
+  if (bs == NULL) return NULL;
+
+  dx = (Dex*) malloc(sizeof(Dex));
+
+  if (dx == NULL) alloc_fail();
+
+  dx->header = dx_header(bs,bs->offset);
+  dx->map_list = dx_maplist(bs,dx->header->map_off);
+
+  //header data
+  DX_ALLOC_LIST(DexStringIdItem*,dx->string_ids,dx->header->string_ids_size);
+  DX_ALLOC_LIST(DexTypeIdItem*,dx->type_ids,dx->header->type_ids_size);
+  DX_ALLOC_LIST(DexProtoIdItem*,dx->proto_ids,dx->header->proto_ids_size);
+  DX_ALLOC_LIST(DexFieldIdItem*,dx->field_ids,dx->header->field_ids_size);
+  DX_ALLOC_LIST(DexMethodIdItem*,dx->method_ids,dx->header->method_ids_size);
+  DX_ALLOC_LIST(DexClassDefItem*,dx->class_defs,dx->header->class_defs_size);
+    
+  bsseek(bs,dx->header->string_ids_off);
+  for (i=0; i<dx->header->string_ids_size; i++)
+    dx->string_ids[i] = dx_stringid(bs,bs->offset);
+
+  bsseek(bs,dx->header->type_ids_off);
+  for (i=0; i<dx->header->type_ids_size; i++)
+    dx->type_ids[i] = dx_typeid(bs,bs->offset);
+
+  bsseek(bs,dx->header->proto_ids_off);
+  for (i=0; i<dx->header->proto_ids_size; i++)
+    dx->proto_ids[i] = dx_protoid(bs,bs->offset);
+
+  bsseek(bs,dx->header->field_ids_off);
+  for (i=0; i<dx->header->field_ids_size; i++)
+    dx->field_ids[i] = dx_fieldid(bs,bs->offset);
+
+  bsseek(bs,dx->header->method_ids_off);
+  for (i=0; i<dx->header->method_ids_size; i++)
+    dx->method_ids[i] = dx_methodid(bs,bs->offset);
+
+  bsseek(bs,dx->header->class_defs_off);
+  for (i=0; i<dx->header->class_defs_size; i++)
+    dx->class_defs[i] = dx_classdef(bs,bs->offset);
+
+  //Data from string id
+  DX_ALLOC_LIST(DexStringDataItem*,dx->string_data_list,dx->header->string_ids_size);
+
+  for (i=0; i<dx->header->string_ids_size; i++)
+    dx->string_data_list[i] = dx_stringdata(bs,dx->string_ids[i]->string_data_off);
+  
+  //Data from proto id
+  dx->meta.type_lists_size = 0;
+  dx->meta.type_lists_alloc = dx->header->proto_ids_size;
+
+  DX_ALLOC_LIST(DexTypeList*,dx->type_lists,dx->meta.type_lists_alloc);
+
+  DX_READ_TABLE(DexTypeList*,
+		dx_typelist,
+		dx->header->proto_ids_size,
+		dx->proto_ids[i]->parameters_off,
+		dx->type_lists,
+		dx->meta.type_lists_size,
+		dx->meta.type_lists_alloc);
+
+  //Data from class def
+  DX_READ_TABLE(DexTypeList*,
+		dx_typelist,
+		dx->header->class_defs_size,
+		dx->class_defs[i]->interfaces_off,
+		dx->type_lists,
+		dx->meta.type_lists_size,
+		dx->meta.type_lists_alloc);
+
+  dx->meta.an_directories_size = 0;
+  dx->meta.an_directories_alloc = dx->header->class_defs_size;
+
+  DX_ALLOC_LIST(DexAnnotationDirectoryItem*,
+		dx->an_directories,dx->meta.an_directories_alloc);
+
+  DX_READ_TABLE(DexAnnotationDirectoryItem*,
+		dx_annotationdirectoryitem,
+		dx->header->class_defs_size,
+		dx->class_defs[i]->annotations_off,
+		dx->an_directories,
+		dx->meta.an_directories_size,
+		dx->meta.an_directories_alloc);
+
+  dx->meta.class_data_size = 0;
+  dx->meta.class_data_alloc = dx->header->class_defs_size;
+
+  DX_ALLOC_LIST(DexClassDataItem*,
+		dx->class_data,dx->meta.class_data_alloc);
+
+  DX_READ_TABLE(DexClassDataItem*,
+		dx_classdata,
+		dx->header->class_defs_size,
+		dx->class_defs[i]->class_data_off,
+		dx->class_data,
+		dx->meta.class_data_size,
+		dx->meta.class_data_alloc);
+
+  dx->meta.encoded_arrays_size = 0;
+  dx->meta.encoded_arrays_alloc = dx->header->class_defs_size;
+
+  DX_ALLOC_LIST(DexEncodedArray*,
+		dx->encoded_arrays,dx->meta.encoded_arrays_alloc);
+
+  DX_READ_TABLE(DexEncodedArray*,
+		dx_encodedarray,
+		dx->header->class_defs_size,
+		dx->class_defs[i]->static_values_off,
+		dx->encoded_arrays,
+		dx->meta.encoded_arrays_size,
+		dx->meta.encoded_arrays_alloc);
+
+  //Data from class data
+  dx->meta.code_list_size = 0;
+  dx->meta.code_list_alloc = dx->meta.class_data_size;
+
+  DX_ALLOC_LIST(DexCodeItem*,
+		dx->code_list,dx->meta.code_list_alloc);
+
+  for (j=0; j< dx->meta.class_data_size; j++) {
+    if (dx->class_data[j]->meta.corrupted != 0) continue;
+
+    DX_READ_TABLE(DexCodeItem*,
+		  dx_codeitem,
+		  ul128toui(dx->class_data[j]->direct_methods_size),
+		  ul128toui(dx->class_data[j]->direct_methods[i]->code_off),
+		  dx->code_list,
+		  dx->meta.code_list_size,
+		  dx->meta.code_list_alloc);   
+
+    DX_READ_TABLE(DexCodeItem*,
+		  dx_codeitem,
+		  ul128toui(dx->class_data[j]->virtual_methods_size),
+		  ul128toui(dx->class_data[j]->virtual_methods[i]->code_off),
+		  dx->code_list,
+		  dx->meta.code_list_size,
+		  dx->meta.code_list_alloc);   
+  }
+
+  //data from code item
+  dx->meta.debug_info_list_size = 0;
+  dx->meta.debug_info_list_alloc = dx->meta.code_list_size;
+
+  DX_ALLOC_LIST(DexDebugInfo*,
+		dx->debug_info_list,dx->meta.debug_info_list_alloc);
+
+  DX_READ_TABLE(DexDebugInfo*,
+		dx_debuginfo,
+		dx->meta.code_list_size,
+		dx->code_list[i]->debug_info_off,
+		dx->debug_info_list,
+		dx->meta.debug_info_list_size,
+		dx->meta.debug_info_list_alloc);
+ 
+  //data from annotations directory
+  dx->meta.an_set_size = 0;
+  dx->meta.an_set_alloc = dx->meta.an_directories_size;
+
+  DX_ALLOC_LIST(DexAnnotationSetItem*,
+		dx->an_set,dx->meta.an_set_alloc);
+
+  DX_READ_TABLE(DexAnnotationSetItem*,
+		dx_annotationsetitem,
+		dx->meta.an_directories_size,
+		dx->an_directories[i]->class_annotations_off,
+		dx->an_set,
+		dx->meta.an_set_size,
+		dx->meta.an_set_alloc);
+
+  dx->meta.an_set_ref_lists_size = 0;
+  dx->meta.an_set_ref_lists_alloc = dx->meta.an_directories_size;
+
+  DX_ALLOC_LIST(DexAnnotationSetRefList*,
+		dx->an_set_ref_lists,dx->meta.an_set_ref_lists_alloc);
+
+  for (j=0; j<dx->meta.an_directories_size; j++) {
+    if (dx->an_directories[j]->meta.corrupted != 0) continue;
+
+    DX_READ_TABLE(DexAnnotationSetItem*,
+		  dx_annotationsetitem,
+		  dx->an_directories[j]->fields_size,
+		  dx->an_directories[j]->field_annotations[i]->annotations_off,
+		  dx->an_set,
+		  dx->meta.an_set_size,
+		  dx->meta.an_set_alloc);
+
+    DX_READ_TABLE(DexAnnotationSetItem*,
+		  dx_annotationsetitem,
+		  dx->an_directories[j]->annotated_methods_size,
+		  dx->an_directories[j]->method_annotations[i]->annotations_off,
+		  dx->an_set,
+		  dx->meta.an_set_size,
+		  dx->meta.an_set_alloc);
+
+    DX_READ_TABLE(DexAnnotationSetRefList*,
+		  dx_annotationsetreflist,
+		  dx->an_directories[j]->annotated_parameters_size,
+		  dx->an_directories[j]->parameter_annotations[i]->annotations_off,
+		  dx->an_set_ref_lists,
+		  dx->meta.an_set_ref_lists_size,
+		  dx->meta.an_set_ref_lists_alloc);
+  }
+
+  //data from annotation set ref lists
+  for (j=0; j<dx->meta.an_set_ref_lists_size; j++) {
+    if (dx->an_set_ref_lists[j]->meta.corrupted != 0) continue;
+    
+    DX_READ_TABLE(DexAnnotationSetItem*,
+		  dx_annotationsetitem,
+		  dx->an_set_ref_lists[j]->size,
+		  dx->an_set_ref_lists[j]->list[i]->annotations_off,
+		  dx->an_set,
+		  dx->meta.an_set_size,
+		  dx->meta.an_set_alloc);
+  }
+
+  //data from annotation set items
+  dx->meta.annotations_size = 0;
+  dx->meta.annotations_alloc = dx->meta.an_set_size;
+
+  DX_ALLOC_LIST(DexAnnotationItem*,
+		dx->annotations,dx->meta.annotations_alloc);
+
+
+  for (j=0; j<dx->meta.an_set_size; j++) {
+    if (dx->an_set[j]->meta.corrupted != 0) continue;
+    
+    DX_READ_TABLE(DexAnnotationItem*,
+		  dx_annotationitem,
+		  dx->an_set[j]->size,
+		  dx->an_set[j]->entries[i]->annotation_off,
+		  dx->annotations,
+		  dx->meta.annotations_size,
+		  dx->meta.annotations_alloc);
+  }
+
+  return dx;
 }
