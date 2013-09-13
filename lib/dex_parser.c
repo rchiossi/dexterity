@@ -720,7 +720,6 @@ DexEncodedArrayItem* dx_encodedarrayitem(ByteStream* bs, uint32_t offset) {
 
 Dex* dx_parse(ByteStream* bs) {
   Dex* dx;
-
   unsigned int i,j;
 
   if (bs == NULL) return NULL;

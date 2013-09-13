@@ -11,6 +11,13 @@ class Dex(object):
         
         self._dex = dxlib.dx_parse(self.bs._bs)
 
+    def save(self,filename):
+        if filename == None: 
+            raise(Exception("Null File Name."))        
+
+        dxlib.dx_build(self._dex,filename)
+
+    #Data 
     def header(self):
         return self._dex.contents.header.contents
 

@@ -391,3 +391,71 @@ void dxb_encodedarrayitem(ByteStream* bs, DexEncodedArrayItem* obj) {
 
   dxb_encodedarray(bs,obj->value);
 }
+
+void dx_build(Dex* dx, char* filename) {
+  ByteStream* bs;
+  unsigned int i,j;
+
+  if (dx == NULL) return;
+
+  bs = bsalloc(dx->header->file_size);
+
+  if (bs == NULL) return;
+
+  
+  dxb_header(bs,dx->header);
+  dxb_maplist(bs,dx->map_list);
+
+  for (i=0; i<dx->header->string_ids_size; i++)
+    dxb_stringid(bs,dx->string_ids[i]);
+
+  for (i=0; i<dx->header->type_ids_size; i++)
+    dxb_typeid(bs,dx->type_ids[i]);
+
+  for (i=0; i<dx->header->proto_ids_size; i++)
+    dxb_protoid(bs,dx->proto_ids[i]);
+
+  for (i=0; i<dx->header->field_ids_size; i++)
+    dxb_fieldid(bs,dx->field_ids[i]);
+
+  for (i=0; i<dx->header->method_ids_size; i++)
+    dxb_methodid(bs,dx->method_ids[i]);
+
+  for (i=0; i<dx->header->class_defs_size; i++)
+    dxb_classdef(bs,dx->class_defs[i]);
+
+  //Data
+  for (i=0; i<dx->header->string_ids_size; i++)
+    dxb_stringdata(bs,dx->string_data_list[i]);
+  
+  for (i=0; i<dx->meta.type_lists_size; i++)
+    dxb_typelist(bs,dx->type_lists[i]);
+
+  for (i=0; i<dx->meta.an_directories_size; i++)
+    dxb_annotationdirectoryitem(bs,dx->an_directories[i]);
+
+  for (i=0; i<dx->meta.class_data_size; i++)
+    dxb_classdata(bs,dx->class_data[i]);
+
+  for (i=0; i<dx->meta.encoded_arrays_size; i++)
+    dxb_encodedarray(bs,dx->encoded_arrays[i]);
+
+  for (i=0; i<dx->meta.code_list_size; i++)
+    dxb_codeitem(bs,dx->code_list[i]);
+
+  for (i=0; i<dx->meta.debug_info_list_size; i++)
+    dxb_debuginfo(bs,dx->debug_info_list[i]);
+
+  for (i=0; i<dx->meta.an_set_size; i++)
+    dxb_annotationsetitem(bs,dx->an_set[i]);
+
+  for (i=0; i<dx->meta.an_set_ref_lists_size; i++)
+    dxb_annotationsetreflist(bs,dx->an_set_ref_lists[i]);
+
+  for (i=0; i<dx->meta.annotations_size; i++)
+    dxb_annotationitem(bs,dx->annotations[i]);
+
+  bssave(bs,filename);
+
+  bsfree(bs);
+}

@@ -368,6 +368,8 @@ DXPARSE(dx_annotationitem,DexAnnotationItem);
 DXPARSE(dx_encodedarrayitem,DexEncodedArrayItem);
 
 //Build
+void dx_build(Dex* dx, char* filename);
+
 #define DXBUILD(_name,_type) void _name (ByteStream* bs, _type* obj)
 
 DXBUILD(dxb_header,DexHeaderItem);

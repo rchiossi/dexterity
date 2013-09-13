@@ -485,6 +485,9 @@ DXPARSE('dx_annotationsetitem',DexAnnotationSetItem);
 DXPARSE('dx_annotationitem',DexAnnotationItem);
 DXPARSE('dx_encodedarrayitem',DexEncodedArrayItem);
 
+dxlib.dx_build.argtypes = (POINTER(_Dex),c_char_p)
+dxlib.dx_build.restype  = None
+
 def DXBUILD(name,obj):
     global dxlib
     getattr(dxlib,name).argtypes = (POINTER(_ByteStream),POINTER(obj))
