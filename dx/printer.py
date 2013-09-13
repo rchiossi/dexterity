@@ -1,5 +1,5 @@
-from dex import DexEncodedArray
-from dex import DexEncodedAnnotation
+from dxlib import DexEncodedArray
+from dxlib import DexEncodedAnnotation
 from ctypes import cast
 from ctypes import POINTER, c_char_p
 

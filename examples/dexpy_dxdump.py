@@ -2,65 +2,66 @@
 
 import argparse
 
-from dx.dex import Dex
+from py_parse import DexPy
 from dx.printer import DexPrinter
 
 def print_dump(args):
     printer = DexPrinter(args.meta)
 
-    dex = Dex(args.dex_file)
+    dex = DexPy(args.dex_file)
+    dex.parse()
 
     if args.H:
-        printer.header(dex.header())
+        printer.header(dex.header)
     if args.X:
-        printer.maplist(dex.map_list())   
+        printer.maplist(dex.map_list)   
     if args.S:
-        for item in dex.string_ids():
+        for item in dex.string_ids:
             printer.stringid(item)
     if args.T:
-        for item in dex.type_ids():
+        for item in dex.type_ids:
             printer.typeid(item)
     if args.P:
-        for item in dex.proto_ids():
+        for item in dex.proto_ids:
             printer.protoid(item)
     if args.F:
-        for item in dex.field_ids():
+        for item in dex.field_ids:
             printer.fieldid(item)
     if args.M:
-        for item in dex.method_ids():
+        for item in dex.method_ids:
             printer.methodid(item)
     if args.C:
-        for item in dex.class_defs():
+        for item in dex.class_defs:
             printer.classdef(item)
     if args.t:
-        for item in dex.type_lists():
+        for item in dex.type_lists:
             printer.typelist(item)
     if args.s:
-        for item in dex.string_data_list():
+        for item in dex.string_data_list:
             printer.stringdata(item)
     if args.c:
-        for item in dex.class_data_list():
+        for item in dex.class_data_list:
             printer.classdata(item)
     if args.b:
-        for item in dex.code_list():
+        for item in dex.code_list:
             printer.codeitem(item)
     if args.d:
-        for item in dex.debug_info_list():
+        for item in dex.debug_info_list:
             printer.debuginfo(item)
     if args.i:
-        for item in dex.encoded_arrays():
+        for item in dex.class_statics:
             printer.encodedarray(item)
     if args.n:
-        for item in dex.an_directories():
+        for item in dex.class_annotations:
             printer.annotationdirectoryitem(item)
     if args.l:
-        for item in dex.an_set_ref_lists():
+        for item in dex.annotation_set_ref_lists:
             printer.annotationsetreflist(item)
     if args.e:
-        for item in dex.an_set():
+        for item in dex.annotation_sets:
             printer.annotationsetitem(item)
     if args.r:
-        for item in dex.annotations():
+        for item in dex.annotations:
             printer.annotationitem(item)
 
 def main():
