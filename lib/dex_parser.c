@@ -8,20 +8,20 @@
 
 #define DX_ALLOC(_type,_var)			\
   do {						\
-  (_var) = (_type*) malloc(sizeof(_type));	\
-  if ((_var) == NULL) alloc_fail();		\
-  (_var)->meta.offset = offset;			\
-  (_var)->meta.corrupted = 0;			\
+    (_var) = (_type*) malloc(sizeof(_type));	\
+    if ((_var) == NULL) alloc_fail();		\
+    (_var)->meta.offset = offset;		\
+    (_var)->meta.corrupted = 0;			\
   } while(0)
 
 #define DX_ALLOC_LIST(_type,_var,_size)			\
   do {							\
-  if (_size != 0) {					\
-    (_var) = (_type*) malloc(sizeof(_type)*(_size));	\
-    if ((_var) == NULL) alloc_fail();			\
-  } else {						\
-    (_var) = NULL;					\
-  }							\
+    if (_size != 0) {					\
+      (_var) = (_type*) malloc(sizeof(_type)*(_size));	\
+      if ((_var) == NULL) alloc_fail();			\
+    } else {						\
+      (_var) = NULL;					\
+    }							\
   } while(0)
 
 #define DX_REALLOC_LIST(_type,_var,_cur_size)				\
@@ -46,8 +46,7 @@
   return res;					      \
 }
 
-void alloc_fail() __attribute__ ((noreturn));
-void alloc_fail() {
+void __attribute__ ((noreturn)) alloc_fail() {
   fprintf(stderr,"ERROR: Unable to allocate memory.\n");
   exit(-1);
 }
@@ -738,6 +737,13 @@ Dex* dx_parse(ByteStream* bs) {
   DX_ALLOC_LIST(DexFieldIdItem*,dx->field_ids,dx->header->field_ids_size);
   DX_ALLOC_LIST(DexMethodIdItem*,dx->method_ids,dx->header->method_ids_size);
   DX_ALLOC_LIST(DexClassDefItem*,dx->class_defs,dx->header->class_defs_size);
+
+  dx->meta.string_ids_alloc = dx->header->string_ids_size;
+  dx->meta.type_ids_alloc = dx->header->type_ids_size;
+  dx->meta.proto_ids_alloc = dx->header->proto_ids_size;
+  dx->meta.field_ids_alloc = dx->header->field_ids_size;
+  dx->meta.method_ids_alloc = dx->header->method_ids_size;
+  dx->meta.class_defs_alloc = dx->header->class_defs_size;
     
   bsseek(bs,dx->header->string_ids_off);
   for (i=0; i<dx->header->string_ids_size; i++)
@@ -764,9 +770,12 @@ Dex* dx_parse(ByteStream* bs) {
     dx->class_defs[i] = dx_classdef(bs,bs->offset);
 
   //Data from string id
+  dx->meta.string_data_list_size = dx->header->string_ids_size;
+  dx->meta.string_data_list_alloc = dx->header->string_ids_size;
+
   DX_ALLOC_LIST(DexStringDataItem*,dx->string_data_list,dx->header->string_ids_size);
 
-  for (i=0; i<dx->header->string_ids_size; i++)
+  for (i=0; i<dx->meta.string_data_list_size; i++)
     dx->string_data_list[i] = dx_stringdata(bs,dx->string_ids[i]->string_data_off);
   
   //Data from proto id

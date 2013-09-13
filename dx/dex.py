@@ -17,6 +17,15 @@ class Dex(object):
 
         dxlib.dx_build(self._dex,filename)
 
+    def shift_offset(self,base,delta):
+        dxlib.dx_shift_offset(self._dex,base,delta)
+
+    def shift_stringid(self,base,delta):
+        dxlib.dx_shift_stringif(self._dex,base,delta)    
+
+    def add_string(self,string):
+        dxlib.dx_string_add(self._dex,string)
+
     #Data 
     def header(self):
         return self._dex.contents.header.contents

@@ -355,6 +355,14 @@ class DexEncodedArrayItem(Structure):
 # C dex object
 class DexMeta(Structure):
     _fields_ = [
+        ('string_ids_alloc',c_size_t),
+        ('type_ids_alloc',c_size_t),
+        ('proto_ids_alloc',c_size_t),
+        ('field_ids_alloc',c_size_t),
+        ('method_ids_alloc',c_size_t),
+        ('class_defs_alloc',c_size_t),
+        ('string_data_list_size',c_size_t),
+        ('string_data_list_alloc',c_size_t),
         ('type_lists_size',c_size_t),
         ('type_lists_alloc',c_size_t),
         ('an_directories_size',c_size_t),
@@ -534,6 +542,9 @@ DXBUILD('dxb_annotationsetitem',DexAnnotationSetItem);
 DXBUILD('dxb_annotationitem',DexAnnotationItem);
 DXBUILD('dxb_encodedarrayitem',DexEncodedArrayItem);
 
+dxlib.dx_shift_offset.argtypes = (POINTER(_Dex),c_uint32,c_int32)
+dxlib.dx_shift_offset.restype  = None
+
 def DXOFFSET(name,obj):
     global dxlib
     getattr(dxlib,name).argtypes = (POINTER(obj),c_uint32,c_int32)
@@ -577,6 +588,9 @@ DXOFFSET('dxo_annotationsetitem',DexAnnotationSetItem);
 DXOFFSET('dxo_annotationitem',DexAnnotationItem);
 DXOFFSET('dxo_encodedarrayitem',DexEncodedArrayItem);
 
+dxlib.dx_shift_stringid.argtypes = (POINTER(_Dex),c_uint32,c_int32)
+dxlib.dx_shift_stringid.restype  = None
+
 def DXSTRINGID(name,obj):
     global dxlib
     getattr(dxlib,name).argtypes = (POINTER(obj),c_uint32,c_int32)
@@ -593,3 +607,7 @@ DXSTRINGID('dxsi_encodedarray',DexEncodedArray);
 DXSTRINGID('dxsi_annotationelement',DexAnnotationElement);
 DXSTRINGID('dxsi_encodedannotation',DexEncodedAnnotation);
 DXSTRINGID('dxsi_annotationitem',DexAnnotationItem);
+
+#string ops
+dxlib.dx_string_add.argtypes = (POINTER(_Dex),c_char_p)
+dxlib.dx_string_add.restype  = None

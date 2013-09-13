@@ -394,7 +394,7 @@ void dxb_encodedarrayitem(ByteStream* bs, DexEncodedArrayItem* obj) {
 
 void dx_build(Dex* dx, char* filename) {
   ByteStream* bs;
-  unsigned int i,j;
+  unsigned int i;
 
   if (dx == NULL) return;
 
@@ -425,7 +425,7 @@ void dx_build(Dex* dx, char* filename) {
     dxb_classdef(bs,dx->class_defs[i]);
 
   //Data
-  for (i=0; i<dx->header->string_ids_size; i++)
+  for (i=0; i<dx->meta.string_data_list_size; i++)
     dxb_stringdata(bs,dx->string_data_list[i]);
   
   for (i=0; i<dx->meta.type_lists_size; i++)

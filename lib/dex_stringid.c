@@ -6,53 +6,66 @@
 
 #define UPDATE(_off)				\
   do {						\
-    if ((_off) >= base)				\
-      (_off) += delta;				\
+    if ((_off) >= shift->base)				\
+      (_off) += shift->delta;				\
   } while (0)
 
 #define UPDATE_ULEB(_leb)				\
   do {							\
-    if (ul128toui((_leb)) >= base)			\
-      uitoul128(&(_leb),ul128toui((_leb))+delta);	\
+    if (ul128toui((_leb)) >= shift->base)			\
+      uitoul128(&(_leb),ul128toui((_leb))+shift->delta);	\
   } while (0)
 
 #define UPDATE_ULEBP1(_leb)				\
   do {							\
-    if (ul128p1toi((_leb)) >= base)			\
-      itoul128p1(&(_leb),ul128p1toi((_leb))+delta);	\
+    if (ul128p1toi((_leb)) >= shift->base)			\
+      itoul128p1(&(_leb),ul128p1toi((_leb))+shift->delta);	\
   } while (0)
 
 
-void dxsi_typeid(DexTypeIdItem* obj, uint32_t base, int32_t delta) {
+void dxsi_typeid(DexTypeIdItem* obj, dx_shift* shift) {
   UPDATE(obj->descriptor_idx);
 }
 
-void dxsi_protoid(DexProtoIdItem* obj, uint32_t base, int32_t delta) {
+void dxsi_protoid(DexProtoIdItem* obj, dx_shift* shift) {
   UPDATE(obj->shorty_idx);
 }
 
-void dxsi_fieldid(DexFieldIdItem* obj, uint32_t base, int32_t delta) {
+void dxsi_fieldid(DexFieldIdItem* obj, dx_shift* shift) {
   UPDATE(obj->name_idx);
 }
 
-void dxsi_methodid(DexMethodIdItem* obj, uint32_t base, int32_t delta) {
+void dxsi_methodid(DexMethodIdItem* obj, dx_shift* shift) {
   UPDATE(obj->name_idx);
 }
 
-void dxsi_classdef(DexClassDefItem* obj, uint32_t base, int32_t delta) {
+void dxsi_classdef(DexClassDefItem* obj, dx_shift* shift) {
   UPDATE(obj->source_file_idx);
 }
 
-void dxsi_debuginfo(DexDebugInfo* obj, uint32_t base, int32_t delta) {
-  int i;
+void dxsi_debuginfo(DexDebugInfo* obj, dx_shift* shift) {
+  unsigned int i;
+
+  size_t old_size;
+  dx_shift* lebshift;
 
   for (i=0; i<ul128toui(obj->parameters_size); i++) {
+    old_size = obj->parameter_names[i].size;
+
     UPDATE_ULEBP1(obj->parameter_names[i]);
+    
+    if (obj->parameter_names[i].size != old_size) {
+      lebshift = (dx_shift*) malloc(sizeof(dx_shift));
+      lebshift->base = obj->meta.offset + 1; //Dont need to shift references to itself
+      lebshift->delta = obj->parameter_names[i].size - old_size;
+      
+      shift->next = lebshift;
+    }
   }
 }
 
-void dxsi_encodedvalue(DexEncodedValue* obj, uint32_t base, int32_t delta) {
-  int i;
+void dxsi_encodedvalue(DexEncodedValue* obj, dx_shift* shift) {
+  unsigned int i;
   uint8_t value_type;
 
   UPDATE(obj->meta.offset);
@@ -64,36 +77,95 @@ void dxsi_encodedvalue(DexEncodedValue* obj, uint32_t base, int32_t delta) {
     UPDATE(*((uint32_t*)obj->value));
     break;
   case 0x1C:
-    dxsi_encodedarray((DexEncodedArray*) obj->value,base,delta);
+    dxsi_encodedarray((DexEncodedArray*) obj->value,shift);
     break;
   case 0x1d:
-    dxsi_encodedannotation((DexEncodedAnnotation*)obj->value,base,delta);
+    dxsi_encodedannotation((DexEncodedAnnotation*)obj->value,shift);
     break;
   default:
     break;
   }
 }
 
-void dxsi_encodedarray(DexEncodedArray* obj, uint32_t base, int32_t delta) {
-  int i;
+void dxsi_encodedarray(DexEncodedArray* obj, dx_shift* shift) {
+  unsigned int i;
   
   for (i=0; i<ul128toui(obj->size); i++)
-    dxsi_encodedvalue(obj->values[i],base,delta);
+    dxsi_encodedvalue(obj->values[i],shift);
 }
 
-void dxsi_annotationelement(DexAnnotationElement* obj, uint32_t base, int32_t delta) {
+void dxsi_annotationelement(DexAnnotationElement* obj, dx_shift* shift) {
+  size_t old_size;
+  dx_shift* lebshift;
+
+  old_size = obj->name_idx.size;
+
   UPDATE_ULEB(obj->name_idx);
 
-  dxsi_encodedvalue(obj->value,base,delta);
+  if (obj->name_idx.size != old_size) {
+    lebshift = (dx_shift*) malloc(sizeof(dx_shift));
+    lebshift->base = obj->meta.offset + 1; //Dont need to shift references to itself
+    lebshift->delta = obj->name_idx.size - old_size;
+
+    shift->next = lebshift;
+  }
+
+  dxsi_encodedvalue(obj->value,shift);
 }
 
-void dxsi_encodedannotation(DexEncodedAnnotation* obj, uint32_t base, int32_t delta) {
-  int i;
+void dxsi_encodedannotation(DexEncodedAnnotation* obj, dx_shift* shift) {
+  unsigned int i;
 
   for (i=0; i<ul128toui(obj->size); i++)
-    dxsi_annotationelement(obj->elements[i],base,delta);
+    dxsi_annotationelement(obj->elements[i],shift);
 }
 
-void dxsi_annotationitem(DexAnnotationItem* obj, uint32_t base, int32_t delta) {
-  dxsi_encodedannotation(obj->annotation,base,delta);
+void dxsi_annotationitem(DexAnnotationItem* obj, dx_shift* shift) {
+  dxsi_encodedannotation(obj->annotation,shift);
+}
+
+void dx_shift_stringid(Dex* dx, uint32_t base, int32_t delta) {
+  unsigned int i;
+
+  dx_shift *shift, *prev;
+
+  if (dx == NULL) return;
+
+  shift = (dx_shift*) malloc(sizeof(dx_shift));
+
+  if (shift == NULL) alloc_fail();
+
+  shift->base = base;
+  shift->delta = delta;
+  shift->next = NULL;
+
+  while (shift != NULL) {
+    for (i=0; i<dx->header->type_ids_size; i++)
+      dxsi_typeid(dx->type_ids[i],shift);
+
+    for (i=0; i<dx->header->proto_ids_size; i++)
+      dxsi_protoid(dx->proto_ids[i],shift);
+    
+    for (i=0; i<dx->header->field_ids_size; i++)
+      dxsi_fieldid(dx->field_ids[i],shift);
+
+    for (i=0; i<dx->header->method_ids_size; i++)
+      dxsi_methodid(dx->method_ids[i],shift);
+
+    for (i=0; i<dx->header->class_defs_size; i++)
+      dxsi_classdef(dx->class_defs[i],shift);
+
+    for (i=0; i<dx->meta.encoded_arrays_size; i++)
+      dxsi_encodedarray(dx->encoded_arrays[i],shift);
+
+    for (i=0; i<dx->meta.debug_info_list_size; i++)
+      dxsi_debuginfo(dx->debug_info_list[i],shift);
+
+    for (i=0; i<dx->meta.annotations_size; i++)
+      dxsi_annotationitem(dx->annotations[i],shift);
+
+    prev = shift;
+    shift = shift->next;
+    free(prev);
+  }
 }

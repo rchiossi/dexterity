@@ -8,6 +8,9 @@
 #include "bytestream.h"
 #include "leb128.h"
 
+//die on allocation errors
+void __attribute__ ((noreturn)) alloc_fail();
+
 // Metadata
 typedef struct _Metadata {
   unsigned int corrupted;
@@ -301,6 +304,14 @@ typedef struct _Dex {
 
   //Allocation metadata
   struct {
+    size_t string_ids_alloc;
+    size_t type_ids_alloc;
+    size_t proto_ids_alloc;
+    size_t field_ids_alloc;
+    size_t method_ids_alloc;
+    size_t class_defs_alloc;
+    size_t string_data_list_size;
+    size_t string_data_list_alloc;
     size_t type_lists_size; 
     size_t type_lists_alloc; 
     size_t an_directories_size; 
@@ -413,7 +424,16 @@ DXBUILD(dxb_annotationitem,DexAnnotationItem);
 DXBUILD(dxb_encodedarrayitem,DexEncodedArrayItem);
 
 //Offset shift
-#define DXOFFSET(_name,_type) void _name (_type* obj, uint32_t base, int32_t delta)
+typedef struct _dx_shift {
+  uint32_t base;
+  int32_t delta;
+
+  struct _dx_shift* next;
+} dx_shift;
+
+void dx_shift_offset(Dex* dx, uint32_t base, int32_t delta);
+
+#define DXOFFSET(_name,_type) void _name (_type* obj, dx_shift* shift)
 
 DXOFFSET(dxo_header,DexHeaderItem);
 DXOFFSET(dxo_stringid,DexStringIdItem);
@@ -454,7 +474,9 @@ DXOFFSET(dxo_annotationitem,DexAnnotationItem);
 DXOFFSET(dxo_encodedarrayitem,DexEncodedArrayItem);
 
 //string_id shift
-#define DXSTRINGID(_name,_type) void _name (_type* obj, uint32_t base, int32_t delta)
+void dx_shift_stringid(Dex* dx, uint32_t base, int32_t delta);
+
+#define DXSTRINGID(_name,_type) void _name (_type* obj, dx_shift* shift)
 
 DXSTRINGID(dxsi_typeid,DexTypeIdItem);
 DXSTRINGID(dxsi_protoid,DexProtoIdItem);
