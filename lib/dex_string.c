@@ -114,8 +114,6 @@ void dx_string_add_stringdata(Dex* dx, uint32_t index, char* str) {
   sdata->meta.corrupted = 0;
   sdata->meta.offset = dx->string_ids[index]->string_data_off;
 
-  printf("off = %x\n",sdata->meta.offset);
-
   uitoul128(&(sdata->size),strlen(str));
   DX_ALLOC_LIST(uint8_t,sdata->data,ul128toui(sdata->size)*3+1);
 
@@ -129,7 +127,7 @@ void dx_string_add_stringdata(Dex* dx, uint32_t index, char* str) {
   //Restore offset
   dx->string_ids[index]->string_data_off = sdata->meta.offset;
 
-  //Add new stringid to the string_ids list
+  //Add new stringdata to the string_data list
   if (dx->meta.string_data_list_size >= dx->meta.string_data_list_alloc)
     DX_REALLOC_LIST(DexStringDataItem*,dx->string_data_list,dx->meta.string_data_list_alloc);
   
@@ -153,6 +151,9 @@ void dx_string_add_stringdata(Dex* dx, uint32_t index, char* str) {
 
   //Fix filesize
   dx->header->file_size += delta;  
+
+  //Fix datasize
+  dx->header->data_size += delta;  
 }
 
 void dx_string_add(Dex* dx, char* str) {

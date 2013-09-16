@@ -77,12 +77,13 @@ void dxo_encodedmethod(DexEncodedMethodItem* obj, dx_shift* shift) {
   dx_shift* last;
 
   UPDATE(obj->meta.offset);
-
+  
   old_size = obj->code_off.size;
-
+  
   UPDATE_ULEB(obj->code_off);
 
   if (obj->code_off.size != old_size) {
+    printf("LEB Expansion!\n");
     lebshift = (dx_shift*) malloc(sizeof(dx_shift));
     lebshift->base = obj->meta.offset + 1; //Dont need to shift references to itself
     lebshift->delta = obj->code_off.size - old_size;
@@ -92,7 +93,7 @@ void dxo_encodedmethod(DexEncodedMethodItem* obj, dx_shift* shift) {
     while (last->next != NULL) last = last->next;
 
     last->next = lebshift;
-  }
+  }  
 }
 
 void dxo_classdata(DexClassDataItem* obj, dx_shift* shift) {
@@ -323,58 +324,71 @@ void dx_shift_offset(Dex* dx, uint32_t base, int32_t delta) {
   shift->delta = delta;
   shift->next = NULL;
   
+  dxo_header(dx->header,shift);
+  dxo_maplist(dx->map_list,shift);
+
+  for (i=0; i<dx->header->string_ids_size; i++)
+    dxo_stringid(dx->string_ids[i],shift);
+  
+  for (i=0; i<dx->header->type_ids_size; i++)
+    dxo_typeid(dx->type_ids[i],shift);
+  
+  for (i=0; i<dx->header->proto_ids_size; i++)
+    dxo_protoid(dx->proto_ids[i],shift);
+  
+  for (i=0; i<dx->header->field_ids_size; i++)
+    dxo_fieldid(dx->field_ids[i],shift);
+  
+  for (i=0; i<dx->header->method_ids_size; i++)
+    dxo_methodid(dx->method_ids[i],shift);
+  
+  for (i=0; i<dx->header->class_defs_size; i++)
+    dxo_classdef(dx->class_defs[i],shift);
+    
+  //Data
+  for (i=0; i<dx->meta.string_data_list_size; i++)
+    dxo_stringdata(dx->string_data_list[i],shift);
+  
+  for (i=0; i<dx->meta.type_lists_size; i++)
+    dxo_typelist(dx->type_lists[i],shift);
+  
+  for (i=0; i<dx->meta.an_directories_size; i++)
+    dxo_annotationdirectoryitem(dx->an_directories[i],shift);
+  
+  for (i=0; i<dx->meta.class_data_size; i++)
+    dxo_classdata(dx->class_data[i],shift);
+  
+  for (i=0; i<dx->meta.encoded_arrays_size; i++)
+    dxo_encodedarray(dx->encoded_arrays[i],shift);
+  
+  for (i=0; i<dx->meta.code_list_size; i++)
+    dxo_codeitem(dx->code_list[i],shift);
+  
+  for (i=0; i<dx->meta.debug_info_list_size; i++)
+    dxo_debuginfo(dx->debug_info_list[i],shift);
+  
+  for (i=0; i<dx->meta.an_set_size; i++)
+    dxo_annotationsetitem(dx->an_set[i],shift);
+  
+  for (i=0; i<dx->meta.an_set_ref_lists_size; i++)
+    dxo_annotationsetreflist(dx->an_set_ref_lists[i],shift);
+  
+  for (i=0; i<dx->meta.annotations_size; i++)
+    dxo_annotationitem(dx->annotations[i],shift);  
+
+  prev = shift;
+  shift = shift->next;
+  free(prev);
+
+  //ULEB expansion
   while (shift != NULL) {
-    dxo_header(dx->header,shift);
-    dxo_maplist(dx->map_list,shift);
+    printf("delta1 = %d\n",shift->delta);
+    dx->header->file_size += shift->delta;
 
-    for (i=0; i<dx->header->string_ids_size; i++)
-      dxo_stringid(dx->string_ids[i],shift);
+    if (shift->base > dx->header->data_off)
+      dx->header->data_size += shift->delta;
 
-    for (i=0; i<dx->header->type_ids_size; i++)
-      dxo_typeid(dx->type_ids[i],shift);
-
-    for (i=0; i<dx->header->proto_ids_size; i++)
-      dxo_protoid(dx->proto_ids[i],shift);
-    
-    for (i=0; i<dx->header->field_ids_size; i++)
-      dxo_fieldid(dx->field_ids[i],shift);
-    
-    for (i=0; i<dx->header->method_ids_size; i++)
-      dxo_methodid(dx->method_ids[i],shift);
-    
-    for (i=0; i<dx->header->class_defs_size; i++)
-      dxo_classdef(dx->class_defs[i],shift);
-    
-    //Data
-    for (i=0; i<dx->meta.string_data_list_size; i++)
-      dxo_stringdata(dx->string_data_list[i],shift);
-    
-    for (i=0; i<dx->meta.type_lists_size; i++)
-      dxo_typelist(dx->type_lists[i],shift);
-    
-    for (i=0; i<dx->meta.an_directories_size; i++)
-      dxo_annotationdirectoryitem(dx->an_directories[i],shift);
-    
-    for (i=0; i<dx->meta.class_data_size; i++)
-      dxo_classdata(dx->class_data[i],shift);
-    
-    for (i=0; i<dx->meta.encoded_arrays_size; i++)
-      dxo_encodedarray(dx->encoded_arrays[i],shift);
-    
-    for (i=0; i<dx->meta.code_list_size; i++)
-      dxo_codeitem(dx->code_list[i],shift);
-    
-    for (i=0; i<dx->meta.debug_info_list_size; i++)
-      dxo_debuginfo(dx->debug_info_list[i],shift);
-    
-    for (i=0; i<dx->meta.an_set_size; i++)
-      dxo_annotationsetitem(dx->an_set[i],shift);
-    
-    for (i=0; i<dx->meta.an_set_ref_lists_size; i++)
-      dxo_annotationsetreflist(dx->an_set_ref_lists[i],shift);
-    
-    for (i=0; i<dx->meta.annotations_size; i++)
-      dxo_annotationitem(dx->annotations[i],shift);  
+    dx_shift_offset(dx,shift->base,shift->delta);
 
     prev = shift;
     shift = shift->next;

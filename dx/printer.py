@@ -1,7 +1,7 @@
 from dxlib import DexEncodedArray
 from dxlib import DexEncodedAnnotation
 from ctypes import cast
-from ctypes import POINTER, c_char_p
+from ctypes import POINTER, c_char_p, c_uint32
 
 class DexPrinter (object):
     def __init__(self,meta_verbose=False):
@@ -146,11 +146,11 @@ class DexPrinter (object):
         self.print_attr('class_idx',obj.class_idx,pad,size)
         self.print_attr('access_flags',obj.access_flags,pad,size)
         self.print_attr('superclass_idx',obj.superclass_idx,pad,size)
-        self.print_attr('interfaces_off',obj.interfaces_off,pad,size)
+        self.print_attr('interfaces_off',hex(obj.interfaces_off),pad,size)
         self.print_attr('source_file_idx',obj.source_file_idx,pad,size)
-        self.print_attr('annotations_off',obj.annotations_off,pad,size)
-        self.print_attr('class_data_off',obj.class_data_off,pad,size)
-        self.print_attr('static_values_off',obj.static_values_off,pad,size)
+        self.print_attr('annotations_off',hex(obj.annotations_off),pad,size)
+        self.print_attr('class_data_off',hex(obj.class_data_off),pad,size)
+        self.print_attr('static_values_off',hex(obj.static_values_off),pad,size)
 
     def encodedfield(self,obj,pad=0):
         self.print_label("EncodedField",pad)
@@ -309,7 +309,8 @@ class DexPrinter (object):
 
         print line
 
-        self.print_attr('padding',hex(obj.padding),pad,size)
+        if obj.tries_size > 0 and obj.tries_size % 2 != 0:
+            self.print_attr('padding',hex(obj.padding),pad,size)
         
         self.print_label('tries',pad)
         for i in xrange(obj.tries_size):
@@ -421,7 +422,7 @@ class DexPrinter (object):
         self.print_attr('arg',obj_arg,pad,size)
 
         if obj_type == 0x0:
-            self.print_attr('value',int(obj.value.contents),pad,size)
+            self.print_attr('value',obj.value.contents,pad,size)
         elif obj_type in [0x2,0x3,0x4,0x6,0x10,0x11,0x17,0x18,0x19,0x1a,0x1b]:
             self.print_label('value',pad)
             data = ' '*(pad+2)

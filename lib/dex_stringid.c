@@ -55,6 +55,7 @@ void dxsi_debuginfo(DexDebugInfo* obj, dx_shift* shift) {
     UPDATE_ULEBP1(obj->parameter_names[i]);
     
     if (obj->parameter_names[i].size != old_size) {
+      printf("lebp1shift!\n");
       lebshift = (dx_shift*) malloc(sizeof(dx_shift));
       lebshift->base = obj->meta.offset + 1; //Dont need to shift references to itself
       lebshift->delta = obj->parameter_names[i].size - old_size;
@@ -71,8 +72,6 @@ void dxsi_debuginfo(DexDebugInfo* obj, dx_shift* shift) {
 void dxsi_encodedvalue(DexEncodedValue* obj, dx_shift* shift) {
   unsigned int i;
   uint8_t value_type;
-
-  UPDATE(obj->meta.offset);
 
   value_type = (obj->argtype & 0x1f);
 	       
@@ -102,12 +101,13 @@ void dxsi_annotationelement(DexAnnotationElement* obj, dx_shift* shift) {
   size_t old_size;
   dx_shift* lebshift;
   dx_shift* last;
-
+ 
   old_size = obj->name_idx.size;
 
   UPDATE_ULEB(obj->name_idx);
-
+  
   if (obj->name_idx.size != old_size) {
+    printf("lebshift!\n");
     lebshift = (dx_shift*) malloc(sizeof(dx_shift));
     lebshift->base = obj->meta.offset + 1; //Dont need to shift references to itself
     lebshift->delta = obj->name_idx.size - old_size;
@@ -117,7 +117,7 @@ void dxsi_annotationelement(DexAnnotationElement* obj, dx_shift* shift) {
     while (last->next != NULL) last = last->next;
 
     last->next = lebshift;
-  }
+  }  
 
   dxsi_encodedvalue(obj->value,shift);
 }
@@ -148,33 +148,45 @@ void dx_shift_stringid(Dex* dx, uint32_t base, int32_t delta) {
   shift->delta = delta;
   shift->next = NULL;
 
+  for (i=0; i<dx->header->type_ids_size; i++)
+    dxsi_typeid(dx->type_ids[i],shift);
+  
+  for (i=0; i<dx->header->proto_ids_size; i++)
+    dxsi_protoid(dx->proto_ids[i],shift);
+  
+  for (i=0; i<dx->header->field_ids_size; i++)
+    dxsi_fieldid(dx->field_ids[i],shift);
+  
+  for (i=0; i<dx->header->method_ids_size; i++)
+    dxsi_methodid(dx->method_ids[i],shift);
+  
+  for (i=0; i<dx->header->class_defs_size; i++)
+    dxsi_classdef(dx->class_defs[i],shift);
+  
+  for (i=0; i<dx->meta.encoded_arrays_size; i++)
+    dxsi_encodedarray(dx->encoded_arrays[i],shift);
+  
+  for (i=0; i<dx->meta.debug_info_list_size; i++)
+    dxsi_debuginfo(dx->debug_info_list[i],shift);
+  
+  for (i=0; i<dx->meta.annotations_size; i++)
+    dxsi_annotationitem(dx->annotations[i],shift);
+
+  prev = shift;
+  shift = shift->next;
+  free(prev);
+
+  //ULEB expansion
+  /*
   while (shift != NULL) {
-    for (i=0; i<dx->header->type_ids_size; i++)
-      dxsi_typeid(dx->type_ids[i],shift);
+    printf("delta2 = %d\n",shift->delta);
+    dx->header->file_size += shift->delta;
 
-    for (i=0; i<dx->header->proto_ids_size; i++)
-      dxsi_protoid(dx->proto_ids[i],shift);
-    
-    for (i=0; i<dx->header->field_ids_size; i++)
-      dxsi_fieldid(dx->field_ids[i],shift);
-
-    for (i=0; i<dx->header->method_ids_size; i++)
-      dxsi_methodid(dx->method_ids[i],shift);
-
-    for (i=0; i<dx->header->class_defs_size; i++)
-      dxsi_classdef(dx->class_defs[i],shift);
-
-    for (i=0; i<dx->meta.encoded_arrays_size; i++)
-      dxsi_encodedarray(dx->encoded_arrays[i],shift);
-
-    for (i=0; i<dx->meta.debug_info_list_size; i++)
-      dxsi_debuginfo(dx->debug_info_list[i],shift);
-
-    for (i=0; i<dx->meta.annotations_size; i++)
-      dxsi_annotationitem(dx->annotations[i],shift);
+    dx_shift_offset(dx,shift->base,shift->delta);
 
     prev = shift;
     shift = shift->next;
     free(prev);
   }
+  */
 }
