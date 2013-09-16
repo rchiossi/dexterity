@@ -45,9 +45,9 @@ void dxsi_classdef(DexClassDefItem* obj, dx_shift* shift) {
 
 void dxsi_debuginfo(DexDebugInfo* obj, dx_shift* shift) {
   unsigned int i;
-
   size_t old_size;
   dx_shift* lebshift;
+  dx_shift* last;
 
   for (i=0; i<ul128toui(obj->parameters_size); i++) {
     old_size = obj->parameter_names[i].size;
@@ -58,8 +58,12 @@ void dxsi_debuginfo(DexDebugInfo* obj, dx_shift* shift) {
       lebshift = (dx_shift*) malloc(sizeof(dx_shift));
       lebshift->base = obj->meta.offset + 1; //Dont need to shift references to itself
       lebshift->delta = obj->parameter_names[i].size - old_size;
+      lebshift->next = NULL;
       
-      shift->next = lebshift;
+      last = shift;
+      while (last->next != NULL) last = last->next;
+
+      last->next = lebshift;
     }
   }
 }
@@ -97,6 +101,7 @@ void dxsi_encodedarray(DexEncodedArray* obj, dx_shift* shift) {
 void dxsi_annotationelement(DexAnnotationElement* obj, dx_shift* shift) {
   size_t old_size;
   dx_shift* lebshift;
+  dx_shift* last;
 
   old_size = obj->name_idx.size;
 
@@ -106,8 +111,12 @@ void dxsi_annotationelement(DexAnnotationElement* obj, dx_shift* shift) {
     lebshift = (dx_shift*) malloc(sizeof(dx_shift));
     lebshift->base = obj->meta.offset + 1; //Dont need to shift references to itself
     lebshift->delta = obj->name_idx.size - old_size;
+    lebshift->next = NULL;
 
-    shift->next = lebshift;
+    last = shift;
+    while (last->next != NULL) last = last->next;
+
+    last->next = lebshift;
   }
 
   dxsi_encodedvalue(obj->value,shift);
