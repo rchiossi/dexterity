@@ -432,6 +432,7 @@ typedef struct _dx_shift {
 } dx_shift;
 
 void dx_shift_offset(Dex* dx, uint32_t base, int32_t delta);
+void add_shift(dx_shift* shift, uint32_t base, int32_t delta);
 
 #define DXOFFSET(_name,_type) void _name (_type* obj, dx_shift* shift)
 

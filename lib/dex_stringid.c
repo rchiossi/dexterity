@@ -46,26 +46,14 @@ void dxsi_classdef(DexClassDefItem* obj, dx_shift* shift) {
 void dxsi_debuginfo(DexDebugInfo* obj, dx_shift* shift) {
   unsigned int i;
   size_t old_size;
-  dx_shift* lebshift;
-  dx_shift* last;
 
   for (i=0; i<ul128toui(obj->parameters_size); i++) {
     old_size = obj->parameter_names[i].size;
 
     UPDATE_ULEBP1(obj->parameter_names[i]);
     
-    if (obj->parameter_names[i].size != old_size) {
-      printf("lebp1shift!\n");
-      lebshift = (dx_shift*) malloc(sizeof(dx_shift));
-      lebshift->base = obj->meta.offset + 1; //Dont need to shift references to itself
-      lebshift->delta = obj->parameter_names[i].size - old_size;
-      lebshift->next = NULL;
-      
-      last = shift;
-      while (last->next != NULL) last = last->next;
-
-      last->next = lebshift;
-    }
+    if (obj->parameter_names[i].size != old_size)
+      add_shift(shift,obj->meta.offset + 1,obj->parameter_names[i].size - old_size);
   }
 }
 
@@ -99,25 +87,13 @@ void dxsi_encodedarray(DexEncodedArray* obj, dx_shift* shift) {
 
 void dxsi_annotationelement(DexAnnotationElement* obj, dx_shift* shift) {
   size_t old_size;
-  dx_shift* lebshift;
-  dx_shift* last;
  
   old_size = obj->name_idx.size;
 
   UPDATE_ULEB(obj->name_idx);
   
-  if (obj->name_idx.size != old_size) {
-    printf("lebshift!\n");
-    lebshift = (dx_shift*) malloc(sizeof(dx_shift));
-    lebshift->base = obj->meta.offset + 1; //Dont need to shift references to itself
-    lebshift->delta = obj->name_idx.size - old_size;
-    lebshift->next = NULL;
-
-    last = shift;
-    while (last->next != NULL) last = last->next;
-
-    last->next = lebshift;
-  }  
+  if (obj->name_idx.size != old_size)
+    add_shift(shift,obj->meta.offset + 1,obj->name_idx.size - old_size);
 
   dxsi_encodedvalue(obj->value,shift);
 }
@@ -176,11 +152,13 @@ void dx_shift_stringid(Dex* dx, uint32_t base, int32_t delta) {
   shift = shift->next;
   free(prev);
 
-  //ULEB expansion
-  /*
+  //ULEB expansion  
   while (shift != NULL) {
     printf("delta2 = %d\n",shift->delta);
     dx->header->file_size += shift->delta;
+
+    if (shift->base > dx->header->data_off)
+      dx->header->data_size += shift->delta;
 
     dx_shift_offset(dx,shift->base,shift->delta);
 
@@ -188,5 +166,5 @@ void dx_shift_stringid(Dex* dx, uint32_t base, int32_t delta) {
     shift = shift->next;
     free(prev);
   }
-  */
+  
 }

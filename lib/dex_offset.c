@@ -16,6 +16,29 @@
       uitoul128(&(_leb),ul128toui((_leb))+shift->delta);	\
   } while (0)
 
+void add_shift(dx_shift* shift, uint32_t base, int32_t delta) {
+  dx_shift* next;
+  dx_shift* last;
+
+  printf("Shift Added.\n");
+
+  if (shift == NULL) return;
+
+  next = (dx_shift*) malloc(sizeof(dx_shift));
+
+  if (next == NULL) alloc_fail();
+
+  next->base = base;
+  next->delta = delta;
+  next->next = NULL;
+  
+  last = shift;
+  while (last->next != NULL) last = last->next;
+  
+  last->next = next;
+}
+
+//align 4
 void dxo_header(DexHeaderItem* obj, dx_shift* shift) {
   UPDATE(obj->meta.offset);
 
@@ -30,30 +53,36 @@ void dxo_header(DexHeaderItem* obj, dx_shift* shift) {
   UPDATE(obj->data_off);
 }
 
+//align 4
 void dxo_stringid(DexStringIdItem* obj, dx_shift* shift) {
   UPDATE(obj->meta.offset);
 
   UPDATE(obj->string_data_off);
 }
 
+//align 4
 void dxo_typeid(DexTypeIdItem* obj, dx_shift* shift) {
   UPDATE(obj->meta.offset);
 }
 
+//align 4
 void dxo_protoid(DexProtoIdItem* obj, dx_shift* shift) {
   UPDATE(obj->meta.offset);
 
   UPDATE(obj->parameters_off);
 }
 
+//align 4
 void dxo_fieldid(DexFieldIdItem* obj, dx_shift* shift) {
   UPDATE(obj->meta.offset);
 }
 
+//align 4
 void dxo_methodid(DexMethodIdItem* obj, dx_shift* shift) {
   UPDATE(obj->meta.offset);
 }
 
+//align 4
 void dxo_classdef(DexClassDefItem* obj, dx_shift* shift) {
   UPDATE(obj->meta.offset);
 
@@ -73,8 +102,6 @@ void dxo_encodedfield(DexEncodedFieldItem* obj, dx_shift* shift) {
 
 void dxo_encodedmethod(DexEncodedMethodItem* obj, dx_shift* shift) {
   size_t old_size;
-  dx_shift* lebshift;
-  dx_shift* last;
 
   UPDATE(obj->meta.offset);
   
@@ -82,18 +109,8 @@ void dxo_encodedmethod(DexEncodedMethodItem* obj, dx_shift* shift) {
   
   UPDATE_ULEB(obj->code_off);
 
-  if (obj->code_off.size != old_size) {
-    printf("LEB Expansion!\n");
-    lebshift = (dx_shift*) malloc(sizeof(dx_shift));
-    lebshift->base = obj->meta.offset + 1; //Dont need to shift references to itself
-    lebshift->delta = obj->code_off.size - old_size;
-    lebshift->next = NULL;
-
-    last = shift;
-    while (last->next != NULL) last = last->next;
-
-    last->next = lebshift;
-  }  
+  if (obj->code_off.size != old_size)
+    add_shift(shift,obj->meta.offset + 1,obj->code_off.size - old_size);
 }
 
 void dxo_classdata(DexClassDataItem* obj, dx_shift* shift) {
@@ -118,6 +135,7 @@ void dxo_typeitem(DexTypeItem* obj, dx_shift* shift) {
   UPDATE(obj->meta.offset);
 }
 
+//align 4
 void dxo_typelist(DexTypeList* obj, dx_shift* shift) {
   int i;
 
@@ -153,6 +171,7 @@ void dxo_encodedcatchhandlerlist(DexEncodedCatchHandlerList* obj, dx_shift* shif
     dxo_encodedcatchhandler(obj->list[i],shift);
 }
 
+//align 4
 void dxo_codeitem(DexCodeItem* obj, dx_shift* shift) {
   int i;
 
@@ -178,6 +197,7 @@ void dxo_mapitem(DexMapItem* obj, dx_shift* shift) {
   UPDATE(obj->offset);
 }
 
+//align 4
 void dxo_maplist(DexMapList* obj, dx_shift* shift) {
   int i;
 
@@ -249,6 +269,7 @@ void dxo_parameterannotation(DexParameterAnnotation* obj, dx_shift* shift) {
   UPDATE(obj->annotations_off);
 }
 
+//align 4
 void dxo_annotationdirectoryitem(DexAnnotationDirectoryItem* obj, dx_shift* shift) {
   int i;
 
@@ -272,6 +293,7 @@ void dxo_annotationsetrefitem(DexAnnotationSetRefItem* obj, dx_shift* shift) {
   UPDATE(obj->annotations_off);
 }
 
+//align 4
 void dxo_annotationsetreflist(DexAnnotationSetRefList* obj, dx_shift* shift) {
   int i;
 
@@ -287,6 +309,7 @@ void dxo_annotationoffitem(DexAnnotationOffItem* obj, dx_shift* shift) {
   UPDATE(obj->annotation_off);
 }
 
+//align 4
 void dxo_annotationsetitem(DexAnnotationSetItem* obj, dx_shift* shift) {
   int i;
 
