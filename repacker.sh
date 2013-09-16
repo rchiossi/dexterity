@@ -5,9 +5,6 @@
 #Generate Key
 # keytool -genkey -v -keystore dexterity.keystore -alias dexterity -keyalg RSA -keysize 2048 -validity 10000
 
-stripper=$0
-SP=${stripper%/*}
-
 if  [ $# -ne 4 ]; then
     echo "$0 apk dex keystore alias"
 else
