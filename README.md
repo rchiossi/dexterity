@@ -8,63 +8,28 @@ WARNING: This library is still in it's early stages of development, use at your 
 
 ### Examples
 
-###### mirror.py
+##### Mirror
 The following example parses a DEX file using the built-in parser and then writes a new DEX file from the parsed structures in memory.
 ```python
-#!/usr/bin/python
-
-import argparse
-
 from dx.dex import Dex
 
-def main():
-    parser = argparse.ArgumentParser(description="Parse and reconstruct dex file")
-
-    parser.add_argument('source',help='Source DEX file')
-    parser.add_argument('target',help='Target DEX file')
-
-    args = parser.parse_args()
-
-    dex = Dex(args.source)
-    dex.save(args.target)
-
-if __name__ == "__main__":
-    main()
+dex = Dex("classes.dex")
+dex.save("mirror.dex")
 ```
 
-###### addstr.py
-The following example parses a DEX file, add a string to it and then creates a new DEX file with the modifications.
+###### Add String
+The following example parses a DEX file, add a string to it, creates a new DEX file with the modifications and fix the signature and checksum of the new file.
 ```python
-#!/usr/bin/python
-
-import argparse
-
 from dx.dex import Dex
 from dx.hash import update_signature
 from dx.hash import update_checksum
 
-def main():
-    parser = argparse.ArgumentParser(description="Add a string to a DEX file.")
+dex = Dex("classes.dex")
+dex.add_string("Hello World")
+dex.save("hello.dex")
 
-    parser.add_argument('source',help='Source DEX file')
-    parser.add_argument('target',help='Target DEX file')
-    parser.add_argument('string',help='String to be added')
-
-    args = parser.parse_args() 
-
-    dex = Dex(args.source)
-
-    dex.add_string(args.string)
-
-    dex.save(args.target)
-
-    update_signature(args.target)
-    update_checksum(args.target)
-
-    print "Done"
-
-if __name__ == '__main__':
-    main()
+update_signature("hello.dex")
+update_checksum("hello.dex")
 ```
 
 For more examples of other usages of the library, check the examples folder.
@@ -73,4 +38,4 @@ For more examples of other usages of the library, check the examples folder.
 **dexterity** is released under BSD 3-clause license. Please check LICENSE for more details.
 
 ### Support
-For questions and/or suggestions, join #dexterity on freenode.
+For questions and/or suggestions, join **#dexterity** on **Freenode**.
