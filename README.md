@@ -11,6 +11,8 @@ WARNING: This library is still in it's early stages of development, use at your 
 ##### Mirror
 The following example parses a DEX file using the built-in parser and then writes a new DEX file from the parsed structures in memory.
 ```python
+#!/usr/bin/python
+
 from dx.dex import Dex
 
 dex = Dex("classes.dex")
@@ -20,6 +22,8 @@ dex.save("mirror.dex")
 ###### Add String
 The following example parses a DEX file, add a string to it, creates a new DEX file with the modifications and fix the signature and checksum of the new file.
 ```python
+#!/usr/bin/python
+
 from dx.dex import Dex
 from dx.hash import update_signature
 from dx.hash import update_checksum
