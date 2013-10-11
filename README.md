@@ -42,4 +42,4 @@ For more examples of other usages of the library, check the examples folder.
 **dexterity** is released under BSD 3-clause license. Please check LICENSE for more details.
 
 ### Support
-For questions and/or suggestions, join **#dexterity** on **Freenode**.
+For questions and/or suggestions, join **#droidsec** on **Freenode**.
