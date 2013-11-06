@@ -4,8 +4,7 @@ import argparse
 
 from dx.dex import Dex
 
-from sha1 import update_signature
-from adler32 import update_checksum
+from dx.hash import update_signature, update_checksum
 
 def main():
     parser = argparse.ArgumentParser(description="Parse and reconstruct dex file")
