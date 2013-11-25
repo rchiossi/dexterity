@@ -1,5 +1,6 @@
 #include <stdint.h>
-#include <malloc.h>
+
+#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/mman.h>
@@ -7,10 +8,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "malloc_s.h"
 #include "bytestream.h"
 
 ByteStream* bsalloc(unsigned int size) {
-  ByteStream* bs = (ByteStream*) malloc(sizeof(ByteStream));
+  ByteStream* bs = (ByteStream*) malloc_s(sizeof(ByteStream));
 
   if (bs == NULL) {
     printf("ERROR: Cannot allocate bytestream structure.\n");
@@ -53,7 +55,7 @@ ByteStream* bsmap(char* filename) {
     exit(-1);
   }
 
-  bs = (ByteStream*) malloc(sizeof(ByteStream));
+  bs = (ByteStream*) malloc_s(sizeof(ByteStream));
 
   if (bs == NULL) {
     close(fd);
@@ -255,5 +257,6 @@ int bssave(ByteStream* bs, char* filename) {
 
   fflush(f);
   fclose(f);    
+  return 0;
 }
 

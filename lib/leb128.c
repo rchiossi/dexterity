@@ -29,7 +29,7 @@ unsigned int l128size(ByteStream* bs) {
 }
 
 int l128read(ByteStream* bs, leb128_t* leb) {
-  int ret;
+  unsigned int ret;
 
   if (bs == NULL || leb == NULL) return -1;
 
@@ -49,8 +49,6 @@ int l128read_offset(ByteStream* bs, leb128_t* leb, uint32_t offset) {
 }
 
 int l128write(ByteStream* bs, leb128_t* leb) {
-  int ret;
-
   if (bs == NULL || leb == NULL) return 0;
 
   return bswrite(bs,leb->data,leb->size);
@@ -81,7 +79,6 @@ int32_t ul128p1toi(leb128_t ulebp1) {
 
 int32_t sl128toi(leb128_t sleb) {
   int32_t val = 0;
-  uint32_t mask;
   
   val = ul128toui(sleb);
 
@@ -93,7 +90,7 @@ int32_t sl128toi(leb128_t sleb) {
 }
 
 void uitoul128(leb128_t* leb, uint32_t num) {
-  int i;
+  unsigned int i;
 
   for (i=0; i<5; i++) {
     if (i == 4)
@@ -116,7 +113,7 @@ void itoul128p1(leb128_t* leb, int32_t num) {
 }
 
 void itosl128(leb128_t* leb, int32_t num) {
-  int i;
+  unsigned int i;
 
   leb->data[0] = ((num >> 00) & 0x7f) | 0x80;
   leb->data[1] = ((num >> 07) & 0x7f) | 0x80;

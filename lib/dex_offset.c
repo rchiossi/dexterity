@@ -24,9 +24,7 @@ void add_shift(dx_shift* shift, uint32_t base, int32_t delta) {
 
   if (shift == NULL) return;
 
-  next = (dx_shift*) malloc(sizeof(dx_shift));
-
-  if (next == NULL) alloc_fail();
+  next = (dx_shift*) malloc_s(sizeof(dx_shift));
 
   next->base = base;
   next->delta = delta;
@@ -114,7 +112,7 @@ void dxo_encodedmethod(DexEncodedMethodItem* obj, dx_shift* shift) {
 }
 
 void dxo_classdata(DexClassDataItem* obj, dx_shift* shift) {
-  int i;
+  unsigned int i;
 
   UPDATE(obj->meta.offset);
 
@@ -137,7 +135,7 @@ void dxo_typeitem(DexTypeItem* obj, dx_shift* shift) {
 
 //align 4
 void dxo_typelist(DexTypeList* obj, dx_shift* shift) {
-  int i;
+  unsigned int i;
 
   UPDATE(obj->meta.offset);
 
@@ -163,7 +161,7 @@ void dxo_encodedcatchhandler(DexEncodedCatchHandler* obj, dx_shift* shift) {
 }
 
 void dxo_encodedcatchhandlerlist(DexEncodedCatchHandlerList* obj, dx_shift* shift) {
-  int i;
+  unsigned int i;
 
   UPDATE(obj->meta.offset);
 
@@ -173,7 +171,7 @@ void dxo_encodedcatchhandlerlist(DexEncodedCatchHandlerList* obj, dx_shift* shif
 
 //align 4
 void dxo_codeitem(DexCodeItem* obj, dx_shift* shift) {
-  int i;
+  unsigned int i;
 
   UPDATE(obj->meta.offset);
 
@@ -199,7 +197,7 @@ void dxo_mapitem(DexMapItem* obj, dx_shift* shift) {
 
 //align 4
 void dxo_maplist(DexMapList* obj, dx_shift* shift) {
-  int i;
+  unsigned int i;
 
   UPDATE(obj->meta.offset);
 
@@ -208,7 +206,6 @@ void dxo_maplist(DexMapList* obj, dx_shift* shift) {
 }
 
 void dxo_encodedvalue(DexEncodedValue* obj, dx_shift* shift) {
-  int i;
   uint8_t value_type;
 
   UPDATE(obj->meta.offset);
@@ -228,7 +225,7 @@ void dxo_encodedvalue(DexEncodedValue* obj, dx_shift* shift) {
 }
 
 void dxo_encodedarray(DexEncodedArray* obj, dx_shift* shift) {
-  int i;
+  unsigned int i;
   
   UPDATE(obj->meta.offset);
 
@@ -243,7 +240,7 @@ void dxo_annotationelement(DexAnnotationElement* obj, dx_shift* shift) {
 }
 
 void dxo_encodedannotation(DexEncodedAnnotation* obj, dx_shift* shift) {
-  int i;
+  unsigned int i;
 
   UPDATE(obj->meta.offset);
 
@@ -271,7 +268,7 @@ void dxo_parameterannotation(DexParameterAnnotation* obj, dx_shift* shift) {
 
 //align 4
 void dxo_annotationdirectoryitem(DexAnnotationDirectoryItem* obj, dx_shift* shift) {
-  int i;
+  unsigned int i;
 
   UPDATE(obj->meta.offset);
 
@@ -295,7 +292,7 @@ void dxo_annotationsetrefitem(DexAnnotationSetRefItem* obj, dx_shift* shift) {
 
 //align 4
 void dxo_annotationsetreflist(DexAnnotationSetRefList* obj, dx_shift* shift) {
-  int i;
+  unsigned int i;
 
   UPDATE(obj->meta.offset);
 
@@ -311,7 +308,7 @@ void dxo_annotationoffitem(DexAnnotationOffItem* obj, dx_shift* shift) {
 
 //align 4
 void dxo_annotationsetitem(DexAnnotationSetItem* obj, dx_shift* shift) {
-  int i;
+  unsigned int i;
 
   UPDATE(obj->meta.offset);
 
@@ -332,16 +329,13 @@ void dxo_encodedarrayitem(DexEncodedArrayItem* obj, dx_shift* shift) {
 }
 
 void dx_shift_offset(Dex* dx, uint32_t base, int32_t delta) {
-  ByteStream* bs;
   unsigned int i;
 
   dx_shift *shift, *prev;
 
   if (dx == NULL) return;
 
-  shift = (dx_shift*) malloc(sizeof(dx_shift));
-
-  if (shift == NULL) alloc_fail();
+  shift = (dx_shift*) malloc_s(sizeof(dx_shift));
 
   shift->base = base;
   shift->delta = delta;

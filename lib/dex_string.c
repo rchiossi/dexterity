@@ -8,8 +8,7 @@
 #define DX_ALLOC_LIST(_type,_var,_size)			\
   do {							\
     if (_size != 0) {					\
-      (_var) = (_type*) malloc(sizeof(_type)*(_size));	\
-      if ((_var) == NULL) alloc_fail();			\
+      (_var) = (_type*) malloc_s(sizeof(_type)*(_size));	\
     } else {						\
       (_var) = NULL;					\
     }							\
@@ -18,22 +17,23 @@
 #define DX_REALLOC_LIST(_type,_var,_cur_size)				\
   do {									\
     (_var) = (_type*) realloc((_var),sizeof(_type)*(_cur_size)*2);	\
-    if ((_var) == NULL) alloc_fail();					\
     _cur_size *= 2;							\
   } while(0)
 
 //TODO convert everything to MUTF8
 
 uint32_t dx_string_find_index(Dex* dx, char* str) {
-  uint32_t i;
+  unsigned int i;
+  int ret;
 
   if (dx == NULL || str == NULL) return -1;
 
   for (i=0; i<dx->header->string_ids_size; i++) {
-    if (strcmp(str,dx->string_data_list[i]->data) == 0)
-      return -1;
+    ret = strncmp(str, (char *)dx->string_data_list[i]->data, strlen((char *)dx->string_data_list[i]->data));
 
-    if (strcmp(str,dx->string_data_list[i]->data) < 0)
+    if (ret == 0) // string already exists
+      return -1;
+    else if (ret < 0)
       return i;
   }
 
@@ -45,13 +45,11 @@ void dx_string_add_stringid(Dex* dx, uint32_t index) {
   int32_t delta;
   unsigned int i;
 
-  if (dx == NULL || index < 0 || index >= dx->header->string_ids_size) return; 
+  if (dx == NULL || index >= dx->header->string_ids_size) return; 
 
-  sid = (DexStringIdItem*) malloc(sizeof(DexStringIdItem));
+  sid = (DexStringIdItem*) malloc_s(sizeof(DexStringIdItem));
 
-  if (sid == NULL) alloc_fail();
-
-  sid->meta.corrupted = 0;
+  sid->meta.corrupted = false;
 
   delta = sizeof(DexStringIdItem) - sizeof(Metadata);
 
@@ -105,19 +103,17 @@ void dx_string_add_stringdata(Dex* dx, uint32_t index, char* str) {
   int32_t delta;
   unsigned int i;
 
-  if (dx == NULL || index < 0 || index >= dx->header->string_ids_size) return; 
+  if (dx == NULL || index >= dx->header->string_ids_size) return; 
 
-  sdata = (DexStringDataItem*) malloc(sizeof(DexStringDataItem));
+  sdata = (DexStringDataItem*) malloc_s(sizeof(DexStringDataItem));
 
-  if (sdata == NULL) alloc_fail();
-
-  sdata->meta.corrupted = 0;
+  sdata->meta.corrupted = false;
   sdata->meta.offset = dx->string_ids[index]->string_data_off;
 
   uitoul128(&(sdata->size),strlen(str));
   DX_ALLOC_LIST(uint8_t,sdata->data,ul128toui(sdata->size)*3+1);
 
-  strncpy(sdata->data,str,strlen(str));
+  strncpy((char *)sdata->data,str,strlen(str));
   sdata->data[strlen(str)] = 0x0;
 
   //Fix references
