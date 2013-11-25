@@ -58,7 +58,6 @@ void dxsi_debuginfo(DexDebugInfo* obj, dx_shift* shift) {
 }
 
 void dxsi_encodedvalue(DexEncodedValue* obj, dx_shift* shift) {
-  unsigned int i;
   uint8_t value_type;
 
   value_type = (obj->argtype & 0x1f);
@@ -116,9 +115,7 @@ void dx_shift_stringid(Dex* dx, uint32_t base, int32_t delta) {
 
   if (dx == NULL) return;
 
-  shift = (dx_shift*) malloc(sizeof(dx_shift));
-
-  if (shift == NULL) alloc_fail();
+  shift = (dx_shift*) malloc_s(sizeof(dx_shift));
 
   shift->base = base;
   shift->delta = delta;

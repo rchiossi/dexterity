@@ -3,17 +3,18 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include <malloc.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include "malloc_s.h"
+
 
 #include "bytestream.h"
 #include "leb128.h"
 
-//die on allocation errors
-void __attribute__ ((noreturn)) alloc_fail();
-
 // Metadata
 typedef struct _Metadata {
-  unsigned int corrupted;
+  bool corrupted;
   uint32_t offset;
 } Metadata;
 

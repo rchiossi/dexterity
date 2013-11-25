@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include <malloc.h>
 #include <stdlib.h>
 
 #include "bytestream.h"
@@ -8,17 +7,15 @@
 
 #define DX_ALLOC(_type,_var)			\
   do {						\
-    (_var) = (_type*) malloc(sizeof(_type));	\
-    if ((_var) == NULL) alloc_fail();		\
+    (_var) = (_type*) malloc_s(sizeof(_type));	\
     (_var)->meta.offset = offset;		\
-    (_var)->meta.corrupted = 0;			\
+    (_var)->meta.corrupted = false;			\
   } while(0)
 
 #define DX_ALLOC_LIST(_type,_var,_size)			\
   do {							\
     if (_size != 0) {					\
-      (_var) = (_type*) malloc(sizeof(_type)*(_size));	\
-      if ((_var) == NULL) alloc_fail();			\
+      (_var) = (_type*) malloc_s(sizeof(_type)*(_size));	\
     } else {						\
       (_var) = NULL;					\
     }							\
@@ -27,7 +24,6 @@
 #define DX_REALLOC_LIST(_type,_var,_cur_size)				\
   do {									\
     (_var) = (_type*) realloc((_var),sizeof(_type)*(_cur_size)*2);	\
-    if ((_var) == NULL) alloc_fail();					\
     _cur_size *= 2;							\
   } while(0)
 
@@ -46,17 +42,12 @@
   return res;					      \
 }
 
-void __attribute__ ((noreturn)) alloc_fail() {
-  fprintf(stderr,"ERROR: Unable to allocate memory.\n");
-  exit(-1);
-}
-
 //Read Aux
 int dxread(ByteStream* bs, uint8_t* buf, size_t size) {
   Metadata* meta = (Metadata*) buf;
   uint8_t* ptr = buf += sizeof(Metadata);
   size_t data_size = size - sizeof(Metadata);
-  int ret;
+  unsigned int ret;
 
   meta->offset = bs->offset;
   ret =  bsread(bs,ptr,data_size);
@@ -77,7 +68,6 @@ DXP_FIXED(dx_classdef,DexClassDefItem)
 DexStringDataItem* dx_stringdata(ByteStream* bs, uint32_t offset) {
   DexStringDataItem* res;
   int check;
-  uint8_t byte;
   uint8_t* tape;
 
   if (bs == NULL) return NULL;
@@ -89,7 +79,7 @@ DexStringDataItem* dx_stringdata(ByteStream* bs, uint32_t offset) {
   check = l128read(bs,&(res->size));
 
   if (check || bs->exhausted) {
-    res->meta.corrupted = 1;
+    res->meta.corrupted = true;
     return res;
   }
 
@@ -105,7 +95,7 @@ DexStringDataItem* dx_stringdata(ByteStream* bs, uint32_t offset) {
       bsread(bs,tape,sizeof(uint8_t));
     }
 
-    else if ((byte & 0xf0) == 0xe0) {
+    else if ((*tape & 0xf0) == 0xe0) {
       tape++;
       bsread(bs,tape,sizeof(uint8_t)*2);      
       tape++;
@@ -161,9 +151,8 @@ DexClassDataItem* dx_classdata(ByteStream* bs, uint32_t offset) {
   DexClassDataItem* res;
   int check;
 
-  int i;
-  uint8_t* ptr;
-  uint32_t off;
+  unsigned int i;
+  //uint8_t* ptr;
 
   if (bs == NULL) return NULL;
 
@@ -204,12 +193,12 @@ DexClassDataItem* dx_classdata(ByteStream* bs, uint32_t offset) {
   return res;
 }
 
-DXP_FIXED(dx_typeitem,DexTypeItem);
+DXP_FIXED(dx_typeitem,DexTypeItem)
 
 DexTypeList* dx_typelist(ByteStream* bs, uint32_t offset) {
   DexTypeList* res;
   int check;
-  int i;
+  unsigned int i;
 
   if (bs == NULL) return NULL;
 
@@ -282,7 +271,7 @@ DexEncodedCatchHandler* dx_encodedcatchhandler(ByteStream* bs, uint32_t offset) 
 DexEncodedCatchHandlerList* dx_encodedcatchhandlerlist(ByteStream* bs, uint32_t offset) {
   DexEncodedCatchHandlerList* res;
   int check;
-  int i;
+  unsigned int i;
 
   if (bs == NULL) return NULL;
 
@@ -307,7 +296,7 @@ DexEncodedCatchHandlerList* dx_encodedcatchhandlerlist(ByteStream* bs, uint32_t 
 
 DexCodeItem* dx_codeitem(ByteStream* bs, uint32_t offset) {
   DexCodeItem* res;
-  int i;
+  unsigned int i;
 
   DX_ALLOC(DexCodeItem,res);
 
@@ -346,7 +335,7 @@ DexCodeItem* dx_codeitem(ByteStream* bs, uint32_t offset) {
 DexDebugInfo* dx_debuginfo(ByteStream* bs, uint32_t offset) {
   DexDebugInfo* res;
   int check;
-  int i;
+  unsigned int i;
 
   if (bs == NULL) return NULL;
 
@@ -375,7 +364,7 @@ DXP_FIXED(dx_mapitem,DexMapItem)
 DexMapList* dx_maplist(ByteStream* bs, uint32_t offset) {
   DexMapList* res;
   int check;
-  int i;
+  unsigned int i;
 
   if (bs == NULL) return NULL;
 
@@ -450,7 +439,7 @@ DexEncodedValue* dx_encodedvalue(ByteStream* bs, uint32_t offset) {
   case 0x1f:
     res->value = NULL;
   default:
-    res->meta.corrupted = 1;
+    res->meta.corrupted = true;
     res->value = (uint8_t*) -1;
   }
 
@@ -460,7 +449,7 @@ DexEncodedValue* dx_encodedvalue(ByteStream* bs, uint32_t offset) {
 DexEncodedArray* dx_encodedarray(ByteStream* bs, uint32_t offset) {
   DexEncodedArray* res;
   int check;
-  int i;
+  unsigned int i;
 
   if (bs == NULL) return NULL;
 
@@ -484,7 +473,6 @@ DexEncodedArray* dx_encodedarray(ByteStream* bs, uint32_t offset) {
 DexAnnotationElement* dx_annotationelement(ByteStream* bs, uint32_t offset) {
   DexAnnotationElement* res;
   int check;
-  int i;
 
   if (bs == NULL) return NULL;
 
@@ -504,7 +492,7 @@ DexAnnotationElement* dx_annotationelement(ByteStream* bs, uint32_t offset) {
 DexEncodedAnnotation* dx_encodedannotation(ByteStream* bs, uint32_t offset) {
   DexEncodedAnnotation* res;
   int check;
-  int i;
+  unsigned int i;
 
   if (bs == NULL) return NULL;
 
@@ -528,7 +516,7 @@ DexEncodedAnnotation* dx_encodedannotation(ByteStream* bs, uint32_t offset) {
 
 uint8_t* dx_debug_state_machine(ByteStream* bs, uint32_t offset) {
   uint32_t size = 1;
-  char opcode;
+  uint8_t opcode;
   leb128_t leb;
   uint8_t* res;
 
@@ -573,14 +561,14 @@ uint8_t* dx_debug_state_machine(ByteStream* bs, uint32_t offset) {
   return res;    
 }
 
-DXP_FIXED(dx_fieldannotation,DexFieldAnnotation);
-DXP_FIXED(dx_methodannotation,DexMethodAnnotation);
-DXP_FIXED(dx_parameterannotation,DexParameterAnnotation);
+DXP_FIXED(dx_fieldannotation,DexFieldAnnotation)
+DXP_FIXED(dx_methodannotation,DexMethodAnnotation)
+DXP_FIXED(dx_parameterannotation,DexParameterAnnotation)
 
 DexAnnotationDirectoryItem* dx_annotationdirectoryitem(ByteStream* bs, uint32_t offset) {
   DexAnnotationDirectoryItem* res;
   int check;
-  int i;
+  unsigned int i;
 
   if (bs == NULL) return NULL;
 
@@ -615,12 +603,12 @@ DexAnnotationDirectoryItem* dx_annotationdirectoryitem(ByteStream* bs, uint32_t 
   return res;
 }
 
-DXP_FIXED(dx_annotationsetrefitem,DexAnnotationSetRefItem);
+DXP_FIXED(dx_annotationsetrefitem,DexAnnotationSetRefItem)
 
 DexAnnotationSetRefList* dx_annotationsetreflist(ByteStream* bs, uint32_t offset) {
   DexAnnotationSetRefList* res;
   int check;
-  int i;
+  unsigned int i;
 
   if (bs == NULL) return NULL;
 
@@ -641,12 +629,12 @@ DexAnnotationSetRefList* dx_annotationsetreflist(ByteStream* bs, uint32_t offset
   return res;
 }
 
-DXP_FIXED(dx_annotationoffitem,DexAnnotationOffItem);
+DXP_FIXED(dx_annotationoffitem,DexAnnotationOffItem)
 
 DexAnnotationSetItem* dx_annotationsetitem(ByteStream* bs, uint32_t offset) {
   DexAnnotationSetItem* res;
   int check;
-  int i;
+  unsigned int i;
 
   if (bs == NULL) return NULL;
 
@@ -688,7 +676,6 @@ DexAnnotationItem* dx_annotationitem(ByteStream* bs, uint32_t offset) {
 
 DexEncodedArrayItem* dx_encodedarrayitem(ByteStream* bs, uint32_t offset) {
   DexEncodedArrayItem* res;
-  int check;
 
   if (bs == NULL) return NULL;
 
@@ -723,9 +710,7 @@ Dex* dx_parse(ByteStream* bs) {
 
   if (bs == NULL) return NULL;
 
-  dx = (Dex*) malloc(sizeof(Dex));
-
-  if (dx == NULL) alloc_fail();
+  dx = (Dex*) malloc_s(sizeof(Dex));
 
   dx->header = dx_header(bs,bs->offset);
   dx->map_list = dx_maplist(bs,dx->header->map_off);
@@ -851,7 +836,7 @@ Dex* dx_parse(ByteStream* bs) {
 		dx->code_list,dx->meta.code_list_alloc);
 
   for (j=0; j< dx->meta.class_data_size; j++) {
-    if (dx->class_data[j]->meta.corrupted != 0) continue;
+    if (dx->class_data[j]->meta.corrupted) continue;
 
     DX_READ_TABLE(DexCodeItem*,
 		  dx_codeitem,
@@ -907,7 +892,7 @@ Dex* dx_parse(ByteStream* bs) {
 		dx->an_set_ref_lists,dx->meta.an_set_ref_lists_alloc);
 
   for (j=0; j<dx->meta.an_directories_size; j++) {
-    if (dx->an_directories[j]->meta.corrupted != 0) continue;
+    if (dx->an_directories[j]->meta.corrupted) continue;
 
     DX_READ_TABLE(DexAnnotationSetItem*,
 		  dx_annotationsetitem,
@@ -936,7 +921,7 @@ Dex* dx_parse(ByteStream* bs) {
 
   //data from annotation set ref lists
   for (j=0; j<dx->meta.an_set_ref_lists_size; j++) {
-    if (dx->an_set_ref_lists[j]->meta.corrupted != 0) continue;
+    if (dx->an_set_ref_lists[j]->meta.corrupted) continue;
     
     DX_READ_TABLE(DexAnnotationSetItem*,
 		  dx_annotationsetitem,
@@ -956,7 +941,7 @@ Dex* dx_parse(ByteStream* bs) {
 
 
   for (j=0; j<dx->meta.an_set_size; j++) {
-    if (dx->an_set[j]->meta.corrupted != 0) continue;
+    if (dx->an_set[j]->meta.corrupted) continue;
     
     DX_READ_TABLE(DexAnnotationItem*,
 		  dx_annotationitem,

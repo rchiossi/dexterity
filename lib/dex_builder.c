@@ -61,7 +61,7 @@ void dxb_stringdata(ByteStream* bs, DexStringDataItem* obj) {
     }
   }
 
-  bswrite(bs,end,sizeof(uint8_t));
+  bswrite(bs,(uint8_t*)end,sizeof(uint8_t));
 }
 
 void dxb_encodedfield(ByteStream* bs, DexEncodedFieldItem* obj) {
@@ -83,7 +83,7 @@ void dxb_encodedmethod(ByteStream* bs, DexEncodedMethodItem* obj) {
 }
 
 void dxb_classdata(ByteStream* bs, DexClassDataItem* obj) {
-  int i;
+  unsigned int i;
 
   if (bs == NULL || obj == NULL) return;
 
@@ -107,10 +107,10 @@ void dxb_classdata(ByteStream* bs, DexClassDataItem* obj) {
     dxb_encodedmethod(bs,obj->virtual_methods[i]);
 }
 
-DXB_FIXED(dxb_typeitem,DexTypeItem);
+DXB_FIXED(dxb_typeitem,DexTypeItem)
 
 void dxb_typelist(ByteStream* bs, DexTypeList* obj) {
-  int i;
+  unsigned int i;
 
   if (bs == NULL || obj == NULL) return;
 
@@ -150,7 +150,7 @@ void dxb_encodedcatchhandler(ByteStream* bs, DexEncodedCatchHandler* obj) {
 }
 
 void dxb_encodedcatchhandlerlist(ByteStream* bs, DexEncodedCatchHandlerList* obj) {
-  int i;
+  unsigned int i;
 
   if (bs == NULL || obj == NULL) return;
 
@@ -163,7 +163,7 @@ void dxb_encodedcatchhandlerlist(ByteStream* bs, DexEncodedCatchHandlerList* obj
 }
 
 void dxb_codeitem(ByteStream* bs, DexCodeItem* obj) {
-  int i;
+  unsigned int i;
 
   if (bs == NULL || obj == NULL) return;
 
@@ -191,7 +191,7 @@ void dxb_codeitem(ByteStream* bs, DexCodeItem* obj) {
 }
 
 void dxb_debuginfo(ByteStream* bs, DexDebugInfo* obj) {
-  int i;
+  unsigned int i;
 
   if (bs == NULL || obj == NULL) return;
 
@@ -209,7 +209,7 @@ void dxb_debuginfo(ByteStream* bs, DexDebugInfo* obj) {
 DXB_FIXED(dxb_mapitem,DexMapItem)
 
 void dxb_maplist(ByteStream* bs, DexMapList* obj) {
-  int i;
+  unsigned int i;
 
   if (bs == NULL || obj == NULL) return;
 
@@ -270,7 +270,7 @@ void dxb_encodedvalue(ByteStream* bs, DexEncodedValue* obj) {
 }
 
 void dxb_encodedarray(ByteStream* bs, DexEncodedArray* obj) {
-  int i;
+  unsigned int i;
 
   if (bs == NULL || obj == NULL) return;
 
@@ -283,8 +283,6 @@ void dxb_encodedarray(ByteStream* bs, DexEncodedArray* obj) {
 }
 
 void dxb_annotationelement(ByteStream* bs, DexAnnotationElement* obj) {
-  int i;
-
   if (bs == NULL || obj == NULL) return;
 
   bsseek(bs,obj->meta.offset);
@@ -295,7 +293,7 @@ void dxb_annotationelement(ByteStream* bs, DexAnnotationElement* obj) {
 }
 
 void dxb_encodedannotation(ByteStream* bs, DexEncodedAnnotation* obj) {
-  int i;
+  unsigned int i;
 
   if (bs == NULL || obj == NULL) return;
 
@@ -318,12 +316,12 @@ void dxb_debug_state_machine(ByteStream* bs, uint8_t* obj) {
   bswrite(bs,(obj+sizeof(uint32_t)),size);
 }
 
-DXB_FIXED(dxb_fieldannotation,DexFieldAnnotation);
-DXB_FIXED(dxb_methodannotation,DexMethodAnnotation);
-DXB_FIXED(dxb_parameterannotation,DexParameterAnnotation);
+DXB_FIXED(dxb_fieldannotation,DexFieldAnnotation)
+DXB_FIXED(dxb_methodannotation,DexMethodAnnotation)
+DXB_FIXED(dxb_parameterannotation,DexParameterAnnotation)
 
 void dxb_annotationdirectoryitem(ByteStream* bs, DexAnnotationDirectoryItem* obj) {
-  int i;
+  unsigned int i;
 
   if (bs == NULL || obj == NULL) return;
 
@@ -344,10 +342,10 @@ void dxb_annotationdirectoryitem(ByteStream* bs, DexAnnotationDirectoryItem* obj
     dxb_parameterannotation(bs,obj->parameter_annotations[i]);
 }
 
-DXB_FIXED(dxb_annotationsetrefitem,DexAnnotationSetRefItem);
+DXB_FIXED(dxb_annotationsetrefitem,DexAnnotationSetRefItem)
 
 void dxb_annotationsetreflist(ByteStream* bs, DexAnnotationSetRefList* obj) {
-  int i;
+  unsigned int i;
 
   if (bs == NULL || obj == NULL) return;
 
@@ -359,10 +357,10 @@ void dxb_annotationsetreflist(ByteStream* bs, DexAnnotationSetRefList* obj) {
     dxb_annotationsetrefitem(bs,obj->list[i]);
 }
 
-DXB_FIXED(dxb_annotationoffitem,DexAnnotationOffItem);
+DXB_FIXED(dxb_annotationoffitem,DexAnnotationOffItem)
 
 void dxb_annotationsetitem(ByteStream* bs, DexAnnotationSetItem* obj) {
-  int i;
+  unsigned int i;
 
   if (bs == NULL || obj == NULL) return;
 
