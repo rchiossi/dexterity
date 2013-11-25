@@ -23,15 +23,17 @@
 //TODO convert everything to MUTF8
 
 uint32_t dx_string_find_index(Dex* dx, char* str) {
-  uint32_t i;
+  unsigned int i;
+  int ret;
 
   if (dx == NULL || str == NULL) return -1;
 
   for (i=0; i<dx->header->string_ids_size; i++) {
-    if (strcmp(str,dx->string_data_list[i]->data) == 0)
-      return -1;
+    ret = strncmp(str, (char *)dx->string_data_list[i]->data, strlen((char *)dx->string_data_list[i]->data));
 
-    if (strcmp(str,dx->string_data_list[i]->data) < 0)
+    if (ret == 0) // string already exists
+      return -1;
+    else if (ret < 0)
       return i;
   }
 
@@ -111,7 +113,7 @@ void dx_string_add_stringdata(Dex* dx, uint32_t index, char* str) {
   uitoul128(&(sdata->size),strlen(str));
   DX_ALLOC_LIST(uint8_t,sdata->data,ul128toui(sdata->size)*3+1);
 
-  strncpy(sdata->data,str,strlen(str));
+  strncpy((char *)sdata->data,str,strlen(str));
   sdata->data[strlen(str)] = 0x0;
 
   //Fix references
