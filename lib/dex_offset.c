@@ -152,7 +152,7 @@ void dxo_encodedtypeaddrpair(DexEncodedTypeAddrPair* obj, dx_shift* shift) {
 }
 
 void dxo_encodedcatchhandler(DexEncodedCatchHandler* obj, dx_shift* shift) {
-  unsigned int i;
+  int i;
 
   UPDATE(obj->meta.offset);
 
