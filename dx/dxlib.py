@@ -5,6 +5,7 @@ from ctypes import POINTER, pointer
 from ctypes import c_int, c_uint, c_uint8, c_uint16, c_uint32, c_int32
 from ctypes import c_char_p
 from ctypes import c_size_t
+from ctypes import c_bool
 
 from ctypes import create_string_buffer
 
@@ -53,7 +54,7 @@ class _ByteStream(Structure):
 class Metadata(Structure):
     _fields_ = [
         ('corrupted',c_uint),
-        ('offset', c_uint32),
+        ('offset', c_bool),
         ]
 
 class DexHeaderItem(Structure):

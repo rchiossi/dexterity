@@ -152,7 +152,6 @@ DexClassDataItem* dx_classdata(ByteStream* bs, uint32_t offset) {
   int check;
 
   unsigned int i;
-  //uint8_t* ptr;
 
   if (bs == NULL) return NULL;
 
