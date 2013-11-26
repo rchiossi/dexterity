@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -fPIC -std=gnu99
+CFLAGS = -fPIC -std=gnu99 -W -Wall -Wextra -pedantic
 
 LIB = libdexterity.so
 
