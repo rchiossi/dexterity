@@ -18,7 +18,7 @@
 
 #define UPDATE_ULEBP1(_leb)				\
   do {							\
-    if (ul128p1toi((_leb)) >= shift->base)			\
+    if (ul128p1toi((_leb)) >= (int) (shift->base))			\
       itoul128p1(&(_leb),ul128p1toi((_leb))+shift->delta);	\
   } while (0)
 
@@ -44,7 +44,7 @@ void dxsi_classdef(DexClassDefItem* obj, dx_shift* shift) {
 }
 
 void dxsi_debuginfo(DexDebugInfo* obj, dx_shift* shift) {
-  int i;
+  unsigned int i;
   size_t old_size;
 
   for (i=0; i<ul128toui(obj->parameters_size); i++) {
