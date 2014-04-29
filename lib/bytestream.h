@@ -7,6 +7,11 @@
 #define BS_RO 0
 #define BS_RW 1
 
+// MAP_ANONYMOUS is MAP_ANON on OSX, so this will let us compile
+#ifndef MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
+
 typedef struct _ByteStream {
   char* filename;
   size_t size;
