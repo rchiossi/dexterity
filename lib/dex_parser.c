@@ -1,10 +1,13 @@
 #include <stdint.h>
-#include <malloc.h>
 #include <stdlib.h>
-
+#include <stdio.h>
 #include "bytestream.h"
 #include "leb128.h"
 #include "dex.h"
+
+#if !defined(__APPLE__)
+#include <malloc.h>
+#endif
 
 #define DX_ALLOC(_type,_var)			\
   do {						\

@@ -1,13 +1,20 @@
 #include <stdint.h>
-#include <malloc.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include <stdio.h>
 #include "bytestream.h"
+
+#if !defined(__APPLE__)
+#include <malloc.h>
+#endif
+
+#ifndef  MAP_ANONYMOUS
+#define MAP_ANONYMOUS MAP_ANON
+#endif
 
 ByteStream* bsalloc(unsigned int size) {
   ByteStream* bs = (ByteStream*) malloc(sizeof(ByteStream));

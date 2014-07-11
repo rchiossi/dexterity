@@ -3,7 +3,10 @@
 
 #include <stdint.h>
 #include <stddef.h>
+
+#if !defined(__APPLE__)
 #include <malloc.h>
+#endif
 
 #include "bytestream.h"
 #include "leb128.h"
