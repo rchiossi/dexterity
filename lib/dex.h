@@ -121,7 +121,7 @@ typedef struct _DexClassDataItem {
   DexEncodedMethodItem** virtual_methods;
 } DexClassDataItem;
 
-typedef struct _DexTypeItem {
+typedef struct __attribute__((packed)) _DexTypeItem {
   Metadata meta;
   uint16_t type_idx;
 } DexTypeItem;
