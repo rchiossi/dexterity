@@ -53,8 +53,8 @@ class _ByteStream(Structure):
 #Dex
 class Metadata(Structure):
     _fields_ = [
-        ('corrupted',c_uint),
-        ('offset', c_bool),
+        ('corrupted',c_bool),
+        ('offset', c_uint32),
         ]
 
 class DexHeaderItem(Structure):
